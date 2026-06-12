@@ -26,8 +26,12 @@ tradition-specific engines layered on top.
 - **Core** - the tradition-agnostic engine, value types, and serialisation.
 - **Astronomy** - shared, tradition-neutral astronomy (Julian day, solar terms, the `Ephemeris`
   protocol and a pure-Python `BuiltinEphemeris`).
-- **Traditions** - `tarot`, `astrology`, `four_pillars` (BaZi), and `nine_star_ki`. Each exposes an
-  engine plus its deck and spread, imported from its own subpackage.
+- **Traditions** - each exposes an engine plus its deck and spread, imported from its own subpackage.
+  Drawn traditions take caller-provided randomness via `read` (`tarot`, `lenormand`, `dominoes`,
+  `runes`, `geomancy`, `iching`); computed traditions derive their draw from birth or identity data
+  via `cast` (`astrology`, `four_pillars`, `nine_star_ki`, `numerology`, `name_numerology`,
+  `chaldean_numerology`, `can_chi`, `thaksa`, `weton`, `celtic_tree`, `haab`, `tzolkin`). See the
+  **API Reference** for each.
 
 ## Getting started
 
