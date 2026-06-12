@@ -24,6 +24,12 @@ classifiers = [
 ]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/moriyoshi/fortune-telling-core"
+Documentation = "https://moriyoshi.github.io/fortune-telling-core"
+Repository = "https://github.com/moriyoshi/fortune-telling-core"
+Issues = "https://github.com/moriyoshi/fortune-telling-core/issues"
+
 [project.scripts]
 fortune-telling-demo = "fortune_telling_core.cli:main"
 
