@@ -1,0 +1,244 @@
+"""Generate the built-in ephemeris coefficient module from source tables."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import sys
+from pathlib import Path
+
+from download_vsop87d import VSOP87D_ROOT, download_missing_vsop87d
+from sources.meeus_tables import (
+    MOON_LATITUDE_TERMS,
+    MOON_LONGITUDE_DISTANCE_TERMS,
+    PLUTO_ARGUMENTS,
+    PLUTO_LATITUDE_TERMS,
+    PLUTO_LONGITUDE_TERMS,
+    PLUTO_RADIUS_TERMS,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_OUTPUT = ROOT / "src/fortune_telling_core/astronomy/ephemeris/builtin_series.py"
+SOURCE_ROOT = Path(__file__).resolve().parent / "sources"
+MANIFEST = SOURCE_ROOT / "MANIFEST.sha256"
+
+VSOP87D_TRUNCATION_THRESHOLD = 1e-7
+PLANET_FILES = (
+    ("earth", "VSOP87D.ear"),
+    ("mercury", "VSOP87D.mer"),
+    ("venus", "VSOP87D.ven"),
+    ("mars", "VSOP87D.mar"),
+    ("jupiter", "VSOP87D.jup"),
+    ("saturn", "VSOP87D.sat"),
+    ("uranus", "VSOP87D.ura"),
+    ("neptune", "VSOP87D.nep"),
+)
+
+VsopTerm = tuple[float, float, float]
+VsopCoordinate = dict[int, tuple[VsopTerm, ...]]
+VsopSeries = tuple[VsopCoordinate, VsopCoordinate, VsopCoordinate]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help="generated Python module path",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="fail if the output path does not match the generated content",
+    )
+    parser.add_argument(
+        "--download-missing",
+        action="store_true",
+        help="download missing VSOP87D source files before verifying checksums",
+    )
+    args = parser.parse_args()
+
+    if args.download_missing:
+        download_missing_vsop87d()
+    _verify_manifest()
+    generated = _render_module(_load_vsop87d_series())
+    output = args.output
+    if args.check:
+        current = output.read_text(encoding="utf-8")
+        if current != generated:
+            print(f"{output} is not up to date; run {Path(__file__).as_posix()}", file=sys.stderr)
+            return 1
+        return 0
+    output.write_text(generated, encoding="utf-8")
+    return 0
+
+
+def _verify_manifest() -> None:
+    expected = _read_manifest()
+    missing: list[Path] = []
+    for relative_path, checksum in expected.items():
+        path = _manifest_path(relative_path)
+        if not path.exists():
+            missing.append(path)
+            continue
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        if actual != checksum:
+            raise SystemExit(f"checksum mismatch for {path}: expected {checksum}, got {actual}")
+    if missing:
+        rendered = "\n".join(f"  - {path}" for path in missing)
+        raise SystemExit(
+            "missing ephemeris source files:\n"
+            f"{rendered}\n"
+            "run `python tools/ephemeris/download_vsop87d.py` or rerun with "
+            "`--download-missing`"
+        )
+
+
+def _manifest_path(relative_path: str) -> Path:
+    if relative_path.startswith("vsop87d/"):
+        return VSOP87D_ROOT / Path(relative_path).name
+    return SOURCE_ROOT / relative_path
+
+
+def _read_manifest() -> dict[str, str]:
+    checksums: dict[str, str] = {}
+    for line in MANIFEST.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        checksum, relative_path = stripped.split(maxsplit=1)
+        checksums[relative_path] = checksum
+    return checksums
+
+
+def _load_vsop87d_series() -> dict[str, VsopSeries]:
+    return {
+        planet: _parse_vsop87d_file(VSOP87D_ROOT / filename) for planet, filename in PLANET_FILES
+    }
+
+
+def _parse_vsop87d_file(path: Path) -> VsopSeries:
+    coordinates: tuple[dict[int, list[VsopTerm]], ...] = ({}, {}, {})
+    current_coordinate: int | None = None
+    current_power: int | None = None
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith(" VSOP87 VERSION"):
+            parts = line.split()
+            current_coordinate = int(parts[5]) - 1
+            current_power = int(parts[7].removeprefix("*T**"))
+            continue
+        if current_coordinate is None or current_power is None or not line.strip():
+            continue
+        parts = line.split()
+        amplitude = float(parts[-3])
+        phase = float(parts[-2])
+        frequency = float(parts[-1])
+        if abs(amplitude) >= VSOP87D_TRUNCATION_THRESHOLD:
+            coordinates[current_coordinate].setdefault(current_power, []).append(
+                (amplitude, phase, frequency)
+            )
+
+    return tuple(
+        {power: tuple(terms) for power, terms in coordinate.items()} for coordinate in coordinates
+    )
+
+
+def _render_module(vsop87d_series: dict[str, VsopSeries]) -> str:
+    lines = [
+        '"""Coefficient tables for the dependency-free BuiltinEphemeris.',
+        "",
+        "This file is generated by tools/ephemeris/generate_builtin_series.py.",
+        "Do not edit it directly; edit the generator inputs and regenerate.",
+        "",
+        "VSOP87D coefficients are truncated from the public IMCCE/Bureau des",
+        "Longitudes VSOP87D files. Moon and Pluto periodic terms are the abridged",
+        "public-domain tables printed in Meeus, Astronomical Algorithms, 2nd ed.,",
+        "chapters 47 and 37.",
+        '"""',
+        "",
+        "from __future__ import annotations",
+        "",
+        f"VSOP87D_TRUNCATION_THRESHOLD = {VSOP87D_TRUNCATION_THRESHOLD!r}",
+        "VSOP87D_SOURCE = (",
+        '    "Bretagnon and Francou VSOP87D, public IMCCE coefficient files; "',
+        '    "terms with abs(A) >= 1e-7 retained."',
+        ")",
+        'MEEUS_SOURCE = "Meeus, Astronomical Algorithms, 2nd ed., chapters 37 and 47."',
+        "",
+        (
+            "VSOP87D_SERIES: dict[str, tuple[dict[int, "
+            "tuple[tuple[float, float, float], ...]], ...]] = {"
+        ),
+    ]
+    for planet, _filename in PLANET_FILES:
+        lines.extend(_render_vsop_planet(planet, vsop87d_series[planet]))
+    lines.append("}")
+    lines.append("")
+    lines.extend(
+        _render_terms(
+            "MOON_LONGITUDE_DISTANCE_TERMS",
+            "tuple[tuple[float, ...], ...]",
+            MOON_LONGITUDE_DISTANCE_TERMS,
+        )
+    )
+    lines.extend(
+        _render_terms("MOON_LATITUDE_TERMS", "tuple[tuple[float, ...], ...]", MOON_LATITUDE_TERMS)
+    )
+    lines.extend(_render_terms("PLUTO_ARGUMENTS", "tuple[tuple[float, ...], ...]", PLUTO_ARGUMENTS))
+    lines.extend(
+        _render_terms(
+            "PLUTO_LONGITUDE_TERMS", "tuple[tuple[float, ...], ...]", PLUTO_LONGITUDE_TERMS
+        )
+    )
+    lines.extend(
+        _render_terms("PLUTO_LATITUDE_TERMS", "tuple[tuple[float, ...], ...]", PLUTO_LATITUDE_TERMS)
+    )
+    lines.extend(
+        _render_terms("PLUTO_RADIUS_TERMS", "tuple[tuple[float, ...], ...]", PLUTO_RADIUS_TERMS)
+    )
+    lines.append('BUILTIN_SOURCE = f"{VSOP87D_SOURCE} {MEEUS_SOURCE}"')
+    return "\n".join(lines) + "\n"
+
+
+def _render_vsop_planet(planet: str, series: VsopSeries) -> list[str]:
+    lines = [f'    "{planet}": (']
+    for coordinate in series:
+        lines.append("        {")
+        for power, terms in coordinate.items():
+            if len(terms) == 1:
+                lines.append(f"            {power}: ({_format_tuple(terms[0])},),")
+                continue
+            lines.append(f"            {power}: (")
+            for term in terms:
+                lines.append(f"                {_format_tuple(term)},")
+            lines.append("            ),")
+        lines.append("        },")
+    lines.append("    ),")
+    return lines
+
+
+def _render_terms(name: str, annotation: str, terms: tuple[tuple[float, ...], ...]) -> list[str]:
+    lines = [f"{name}: {annotation} = ("]
+    for term in terms:
+        lines.append(f"    {_format_tuple(term)},")
+    lines.append(")")
+    lines.append("")
+    return lines
+
+
+def _format_tuple(values: tuple[float, ...]) -> str:
+    return f"({', '.join(_format_number(value) for value in values)})"
+
+
+def _format_number(value: float) -> str:
+    if isinstance(value, int):
+        return str(value)
+    if value == 0.0:
+        return "0"
+    return repr(value)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

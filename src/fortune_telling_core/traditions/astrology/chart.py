@@ -1,0 +1,79 @@
+"""Natal chart calculation."""
+
+from __future__ import annotations
+
+from fortune_telling_core.astronomy.deltat import jd_tt_from_utc
+from fortune_telling_core.astronomy.ephemeris.protocol import Ephemeris
+from fortune_telling_core.astronomy.julian import julian_day_utc
+from fortune_telling_core.astronomy.nutation import true_obliquity
+from fortune_telling_core.draw import Draw, Selection
+from fortune_telling_core.traditions.astrology.angles import compute_angles
+from fortune_telling_core.traditions.astrology.birth import BirthData
+from fortune_telling_core.traditions.astrology.bodies import PLANETARY_BODIES, Angle
+from fortune_telling_core.traditions.astrology.config import ZodiacMode
+from fortune_telling_core.traditions.astrology.houses import (
+    compute_houses,
+    degree_in_sign,
+    house_of,
+    sign_id,
+)
+from fortune_telling_core.traditions.astrology.sidereal import sidereal_longitude
+from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART
+from fortune_telling_core.traditions.astrology.zodiac import SIDEREAL_ZODIAC, TROPICAL_ZODIAC
+
+
+def cast_draw(birth: BirthData, ephemeris: Ephemeris) -> Draw:
+    jd_ut = julian_day_utc(birth.birth_datetime)
+    jd_tt = jd_tt_from_utc(jd_ut)
+    angles = compute_angles(jd_ut, jd_tt, birth.latitude, birth.longitude)
+
+    ascendant = _zodiac_longitude(angles.ascendant, birth, jd_tt)
+    midheaven = _zodiac_longitude(angles.midheaven, birth, jd_tt)
+    houses = compute_houses(
+        birth.config.house_system,
+        ascendant,
+        midheaven,
+        birth.latitude,
+        high_latitude_fallback=birth.config.high_latitude_fallback,
+        obliquity=true_obliquity(jd_tt),
+        geometry_midheaven=angles.midheaven,
+    )
+
+    selections: list[Selection] = []
+    for body in PLANETARY_BODIES:
+        position = ephemeris.position(body, jd_tt)
+        longitude = _zodiac_longitude(position.longitude, birth, jd_tt)
+        selections.append(
+            _selection(body.value, longitude, position.speed, house_of(longitude, houses))
+        )
+
+    selections.append(
+        _selection(Angle.ASCENDANT.value, ascendant, 0.0, house_of(ascendant, houses))
+    )
+    selections.append(
+        _selection(Angle.MIDHEAVEN.value, midheaven, 0.0, house_of(midheaven, houses))
+    )
+
+    deck_id = (
+        SIDEREAL_ZODIAC.id if birth.config.zodiac == ZodiacMode.SIDEREAL else TROPICAL_ZODIAC.id
+    )
+    return Draw(deck_id=deck_id, spread_id=NATAL_CHART.id, selections=tuple(selections))
+
+
+def _zodiac_longitude(longitude: float, birth: BirthData, jd_tt: float) -> float:
+    if birth.config.zodiac == ZodiacMode.SIDEREAL:
+        if birth.config.ayanamsa is None:
+            raise AssertionError("sidereal config requires ayanamsa")
+        return sidereal_longitude(longitude, jd_tt, birth.config.ayanamsa)
+    return longitude
+
+
+def _selection(position_id: str, longitude: float, speed: float, house: int) -> Selection:
+    modifiers = {
+        "degree": f"{degree_in_sign(longitude):.6f}",
+        "house": str(house),
+        "longitude": f"{longitude:.6f}",
+        "retrograde": "true" if speed < 0.0 else "false",
+        "speed": f"{speed:.6f}",
+    }
+    return Selection(position_id=position_id, symbol_id=sign_id(longitude), modifiers=modifiers)

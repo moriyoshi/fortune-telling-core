@@ -1,0 +1,29 @@
+"""Compatibility shim for shared built-in ephemeris data."""
+
+from fortune_telling_core.astronomy.ephemeris.builtin_series import (
+    BUILTIN_SOURCE,
+    MEEUS_SOURCE,
+    MOON_LATITUDE_TERMS,
+    MOON_LONGITUDE_DISTANCE_TERMS,
+    PLUTO_ARGUMENTS,
+    PLUTO_LATITUDE_TERMS,
+    PLUTO_LONGITUDE_TERMS,
+    PLUTO_RADIUS_TERMS,
+    VSOP87D_SERIES,
+    VSOP87D_SOURCE,
+    VSOP87D_TRUNCATION_THRESHOLD,
+)
+
+__all__ = [
+    "BUILTIN_SOURCE",
+    "MEEUS_SOURCE",
+    "MOON_LATITUDE_TERMS",
+    "MOON_LONGITUDE_DISTANCE_TERMS",
+    "PLUTO_ARGUMENTS",
+    "PLUTO_LATITUDE_TERMS",
+    "PLUTO_LONGITUDE_TERMS",
+    "PLUTO_RADIUS_TERMS",
+    "VSOP87D_SERIES",
+    "VSOP87D_SOURCE",
+    "VSOP87D_TRUNCATION_THRESHOLD",
+]

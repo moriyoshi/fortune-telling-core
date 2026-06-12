@@ -1,0 +1,95 @@
+[build-system]
+requires = ["hatchling>=1.30", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fortune-telling-core"
+# Version is derived from the git tag (vX.Y.Z) at build time by hatch-vcs.
+dynamic = ["version"]
+description = "Composable, reproducible primitives for fortune-telling systems."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Moriyoshi Koizumi", email = "mozo@mozo.jp" }]
+keywords = ["fortune-telling", "divination", "tarot", "astrology", "numerology"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.scripts]
+fortune-telling-demo = "fortune_telling_core.cli:main"
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=2.1",
+  "pytest>=9.0",
+  "ruff>=0.15",
+  "twine>=6.2",
+]
+docs = [
+  "mkdocs>=1.6.1",
+  "mkdocs-material>=9.7",
+  "mkdocstrings[python]>=1.0",
+  "ruff>=0.15",
+]
+release = [
+  "build>=1.3",
+  "twine>=6.2",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build]
+exclude = [
+  "/.agents",
+  "/.claude",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fortune_telling_core"]
+
+# Matrixed task runner: run the suite (and full gate) against each supported Python.
+#   hatch run test:run        # pytest on 3.12, 3.13, and 3.14
+#   hatch run test:check      # ruff + mypy + pytest on each version
+#   hatch run +py=3.14 test:run   # a single version
+[tool.hatch.envs.test]
+features = ["dev"]
+
+[tool.hatch.envs.test.scripts]
+run = "pytest {args}"
+lint = "ruff check ."
+typecheck = "mypy src tests"
+check = [
+  "ruff check .",
+  "mypy src tests",
+  "pytest {args}",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3.12", "3.13", "3.14"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["fortune_telling_core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

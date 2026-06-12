@@ -1,0 +1,15 @@
+# SHA-256 checksums for vendored ephemeris source files.
+#
+# VSOP87D files are from:
+# https://ftp.imcce.fr/pub/ephem/planets/vsop87/
+#
+# Meeus tables are structured transcriptions from Astronomical Algorithms,
+# 2nd ed., chapters 37 and 47.
+8b160c859136d467f2be7fc29efa8a9652e95516dfbde00e4c739d7ddc90ca91  vsop87d/VSOP87D.ear
+3f3dfbc7d117ecad2b2dadf2fc626b260a3cd5efa98e7d4c6b26cd682fc48090  vsop87d/VSOP87D.jup
+b1184df9553d85ffcf904c16bd437ab668804fa98859f27fe2e7bf6cfa6bc07e  vsop87d/VSOP87D.mar
+f468481b5a05080a943ad4746ff7ea7e0ff6652b71a46d83c9c636cb69485e34  vsop87d/VSOP87D.mer
+3ff65a5cabc04c411f975888f77268b89e336ece0b75d198a3935090fdde3ae6  vsop87d/VSOP87D.nep
+2e49e19396f24c17298f0b667e7763ee5c28b60d549c89d72a17dfd5f8d46b05  vsop87d/VSOP87D.sat
+80eb3a778d53f450066d9b13f17e15b979e253437d22f33ec5a4604cdb2872a7  vsop87d/VSOP87D.ura
+cb2f3a738289ed45f69fec1845e480baf4b32d481eccc21b8629a2d0d10e8261  vsop87d/VSOP87D.ven

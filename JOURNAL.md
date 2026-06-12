@@ -1,0 +1,1 @@
+- 2026-06-12: Split interpreter packaging prep: made core packages pkgutil namespaces and promoted coerce/serde_types helper modules for external namespace contributors.

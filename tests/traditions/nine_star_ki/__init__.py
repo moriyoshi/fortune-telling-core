@@ -1,0 +1,1 @@
+"""Nine Star Ki tests."""
