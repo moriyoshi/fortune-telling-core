@@ -8,6 +8,7 @@ from fortune_telling_core.errors import ValidationError
 from fortune_telling_core.traditions.astrology.config import HouseSystem
 from fortune_telling_core.traditions.astrology.errors import PlacidusUndefinedError
 from fortune_telling_core.traditions.astrology.positions import Houses, normalize_degrees
+from fortune_telling_core.traditions.astrology.zodiac import Sign
 
 _J2000_MEAN_OBLIQUITY = 23.43929111111111
 _PLACIDUS_TOLERANCE = 1.0e-12
@@ -19,21 +20,7 @@ def sign_index(longitude: float) -> int:
 
 
 def sign_id(longitude: float) -> str:
-    signs = (
-        "aries",
-        "taurus",
-        "gemini",
-        "cancer",
-        "leo",
-        "virgo",
-        "libra",
-        "scorpio",
-        "sagittarius",
-        "capricorn",
-        "aquarius",
-        "pisces",
-    )
-    return f"astro.sign.{signs[sign_index(longitude)]}"
+    return tuple(Sign)[sign_index(longitude)].symbol_id
 
 
 def degree_in_sign(longitude: float) -> float:

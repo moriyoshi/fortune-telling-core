@@ -36,6 +36,10 @@ Example:
 from fortune_telling_core.astronomy.ephemeris.builtin import BuiltinEphemeris  # noqa: E402
 from fortune_telling_core.astronomy.ephemeris.fixed import FixedEphemeris  # noqa: E402
 from fortune_telling_core.astronomy.ephemeris.protocol import Ephemeris  # noqa: E402
+from fortune_telling_core.traditions.astrology.dates import (  # noqa: E402
+    sign_for_date,
+    zodiac_date_range,
+)
 from fortune_telling_core.traditions.astrology.engine import (  # noqa: E402
     AstrologyEngine,
     build_engine,
@@ -44,6 +48,7 @@ from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART  # noq
 from fortune_telling_core.traditions.astrology.zodiac import (  # noqa: E402
     SIDEREAL_ZODIAC,
     TROPICAL_ZODIAC,
+    Sign,
 )
 
 __all__ = [
@@ -54,5 +59,8 @@ __all__ = [
     "BuiltinEphemeris",
     "Ephemeris",
     "FixedEphemeris",
+    "Sign",
     "build_engine",
+    "sign_for_date",
+    "zodiac_date_range",
 ]
