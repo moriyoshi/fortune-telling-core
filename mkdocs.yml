@@ -54,7 +54,23 @@ nav:
       - Core: api/core.md
       - Astronomy: api/astronomy.md
       - Traditions:
-          - Tarot: api/traditions/tarot.md
-          - Astrology: api/traditions/astrology.md
-          - Four Pillars: api/traditions/four_pillars.md
-          - Nine Star Ki: api/traditions/nine_star_ki.md
+          - Drawn:
+              - Tarot: api/traditions/tarot.md
+              - Petit Lenormand: api/traditions/lenormand.md
+              - Dominoes: api/traditions/dominoes.md
+              - Elder Futhark Runes: api/traditions/runes.md
+              - Western Geomancy: api/traditions/geomancy.md
+              - I Ching: api/traditions/iching.md
+          - Computed:
+              - Astrology: api/traditions/astrology.md
+              - Four Pillars: api/traditions/four_pillars.md
+              - Nine Star Ki: api/traditions/nine_star_ki.md
+              - Pythagorean Numerology: api/traditions/numerology.md
+              - Name Numerology: api/traditions/name_numerology.md
+              - Chaldean Numerology: api/traditions/chaldean_numerology.md
+              - Can Chi: api/traditions/can_chi.md
+              - Thai Thaksa: api/traditions/thaksa.md
+              - Javanese Weton: api/traditions/weton.md
+              - Celtic Tree Calendar: api/traditions/celtic_tree.md
+              - Maya Haab': api/traditions/haab.md
+              - Maya Tzolk'in: api/traditions/tzolkin.md
