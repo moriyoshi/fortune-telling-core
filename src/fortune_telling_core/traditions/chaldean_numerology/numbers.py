@@ -11,19 +11,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from fortune_telling_core.errors import ValidationError
+from fortune_telling_core.traditions._name_values import latin_chaldean
 
-# Canonical Chaldean letter groups (value -> letters).
-_GROUPS = {
-    1: "AIJQY",
-    2: "BKR",
-    3: "CGLS",
-    4: "DMT",
-    5: "EHNX",
-    6: "UVW",
-    7: "OZ",
-    8: "FP",
-}
-_LETTER_VALUES = {letter: value for value, letters in _GROUPS.items() for letter in letters}
+_LETTER_VALUES = latin_chaldean.LETTER_VALUES
 
 # Planetary rulers of the single-digit roots (Cheiro's Chaldean system).
 _PLANETS = {
@@ -93,7 +83,8 @@ def compute_name_number(name: str) -> NameNumber:
         ValidationError: If the name has no Chaldean letters.
     """
 
-    total = sum(_LETTER_VALUES[letter] for letter in name.upper() if letter in _LETTER_VALUES)
+    units = latin_chaldean.values(name)
+    total = latin_chaldean.total(units)
     if total == 0:
         raise ValidationError("name must contain at least one letter")
     return NameNumber(total=total, root=reduce_to_root(total))

@@ -14,6 +14,8 @@ from fortune_telling_core.request import ReadingRequest
 from fortune_telling_core.rng import Rng
 from fortune_telling_core.spread import Spread
 from fortune_telling_core.symbols import Deck
+from fortune_telling_core.traditions._name_text import format_value_trace
+from fortune_telling_core.traditions._name_values import latin_chaldean
 from fortune_telling_core.traditions.chaldean_numerology.deck import CHALDEAN_NUMEROLOGY_DECK
 from fortune_telling_core.traditions.chaldean_numerology.numbers import (
     compute_name_number,
@@ -89,6 +91,7 @@ class ChaldeanNumerologyEngine(AbstractEngine):
 
         del rng
         name = require_string(collect_values(request), "name")
+        units = latin_chaldean.values(name)
         result = compute_name_number(name)
         data = number(result.root)
         selection = Selection(
@@ -98,6 +101,11 @@ class ChaldeanNumerologyEngine(AbstractEngine):
                 "value": str(data.value),
                 "planet": data.planet,
                 "total": str(result.total),
+                "value_system": latin_chaldean.ID,
+                "value_system_version": latin_chaldean.VERSION,
+                "normalization": "latin_ascii_ignore",
+                "normalized_name": "".join(unit.char for unit in units),
+                "values": format_value_trace(units),
             },
         )
         return Draw(CHALDEAN_NUMEROLOGY_DECK.id, CHALDEAN_NUMEROLOGY_SPREAD.id, (selection,))
@@ -124,7 +132,11 @@ class ChaldeanNumerologyEngine(AbstractEngine):
         summary = (
             f"Name number {modifiers['value']} ({modifiers['planet']}); total {modifiers['total']}."
         )
-        notes = tuple(base.provenance.notes) + ("system=chaldean",)
+        notes = tuple(base.provenance.notes) + (
+            "system=chaldean",
+            f"value_system={latin_chaldean.ID}",
+            "normalization=latin_ascii_ignore",
+        )
         return replace(
             base,
             summary=summary,

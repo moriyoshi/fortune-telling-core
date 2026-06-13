@@ -23,6 +23,9 @@ def test_cast_records_name_number_and_summary() -> None:
     assert selection.modifiers is not None
     assert selection.modifiers["planet"] == "Mars"
     assert selection.modifiers["total"] == "18"
+    assert selection.modifiers["value_system"] == "latin_chaldean.v1"
+    assert selection.modifiers["normalization"] == "latin_ascii_ignore"
+    assert selection.modifiers["values"] == "J:1,O:7,H:5,N:5"
     assert reading.summary == "Name number 9 (Mars); total 18."
 
 
@@ -36,6 +39,7 @@ def test_cast_replay_and_serde_are_deterministic() -> None:
     assert replayed.summary == reading.summary
     assert reading_from_json(reading_to_json(reading)) == reading
     assert "system=chaldean" in reading.provenance.notes
+    assert "value_system=latin_chaldean.v1" in reading.provenance.notes
 
 
 def test_validation_error_on_missing_name() -> None:
