@@ -14,13 +14,12 @@ Each sum is reduced like a Life Path number, preserving the master numbers
 from __future__ import annotations
 
 from dataclasses import dataclass
-from string import ascii_uppercase
 
 from fortune_telling_core.errors import ValidationError
+from fortune_telling_core.traditions._name_values import latin_pythagorean
 from fortune_telling_core.traditions.name_numerology.config import YMode
 from fortune_telling_core.traditions.numerology.numbers import reduce_number
 
-_LETTER_VALUES = {letter: index % 9 + 1 for index, letter in enumerate(ascii_uppercase)}
 _BASE_VOWELS = frozenset("AEIOU")
 
 
@@ -53,20 +52,20 @@ def compute_chart(name: str, y_mode: YMode) -> NameChart:
             consonants under the chosen ``y_mode``.
     """
 
-    letters = [letter for letter in name.upper() if letter in _LETTER_VALUES]
-    if not letters:
+    units = latin_pythagorean.values(name)
+    if not units:
         raise ValidationError("name must contain at least one letter")
 
-    vowels = [letter for letter in letters if _is_vowel(letter, y_mode)]
-    consonants = [letter for letter in letters if not _is_vowel(letter, y_mode)]
+    vowels = [unit for unit in units if _is_vowel(unit.char, y_mode)]
+    consonants = [unit for unit in units if not _is_vowel(unit.char, y_mode)]
     if not vowels:
         raise ValidationError("name has no vowels for the soul urge number")
     if not consonants:
         raise ValidationError("name has no consonants for the personality number")
 
     return NameChart(
-        expression=reduce_number(sum(_LETTER_VALUES[letter] for letter in letters)),
-        soul_urge=reduce_number(sum(_LETTER_VALUES[letter] for letter in vowels)),
-        personality=reduce_number(sum(_LETTER_VALUES[letter] for letter in consonants)),
+        expression=reduce_number(sum(unit.value for unit in units)),
+        soul_urge=reduce_number(sum(unit.value for unit in vowels)),
+        personality=reduce_number(sum(unit.value for unit in consonants)),
         y_mode=y_mode,
     )
