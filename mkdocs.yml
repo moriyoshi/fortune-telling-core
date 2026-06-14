@@ -50,6 +50,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Traditions Reference: traditions-reference.md
   - API Reference:
       - Core: api/core.md
       - Astronomy: api/astronomy.md
@@ -68,6 +69,11 @@ nav:
               - Pythagorean Numerology: api/traditions/numerology.md
               - Name Numerology: api/traditions/name_numerology.md
               - Chaldean Numerology: api/traditions/chaldean_numerology.md
+              - Hebrew Gematria: api/traditions/hebrew_gematria.md
+              - Greek Isopsephy: api/traditions/greek_isopsephy.md
+              - Old Cyrillic Numerals: api/traditions/cyrillic_slavonic_numerals.md
+              - Cyrillic Pythagorean: api/traditions/cyrillic_pythagorean.md
+              - CJK Name Strokes: api/traditions/cjk_name_strokes.md
               - Can Chi: api/traditions/can_chi.md
               - Thai Thaksa: api/traditions/thaksa.md
               - Javanese Weton: api/traditions/weton.md
