@@ -11,8 +11,20 @@ from fortune_telling_core.traditions.cjk_name_strokes.engine import (  # noqa: E
     CjkNameStrokesEngine,
     Grid,
     School,
-    StrokeSource,
     build_engine,
+)
+from fortune_telling_core.traditions.cjk_name_strokes.parsers import (  # noqa: E402
+    parse_kanjidic2,
+    parse_kanjivg,
+)
+from fortune_telling_core.traditions.cjk_name_strokes.providers import (  # noqa: E402
+    DEFAULT_PROVIDER,
+    MappingStrokeProvider,
+    StrokeCountProvider,
+    StrokeProviderRegistry,
+    default_registry,
+    new_default_registry,
+    register_provider,
 )
 from fortune_telling_core.traditions.cjk_name_strokes.spreads import (  # noqa: E402
     CJK_NAME_STROKES_SPREAD,
@@ -21,10 +33,18 @@ from fortune_telling_core.traditions.cjk_name_strokes.spreads import (  # noqa: 
 __all__ = [
     "CJK_NAME_STROKES_DECK",
     "CJK_NAME_STROKES_SPREAD",
+    "DEFAULT_PROVIDER",
     "CharacterSet",
     "CjkNameStrokesEngine",
     "Grid",
+    "MappingStrokeProvider",
     "School",
-    "StrokeSource",
+    "StrokeCountProvider",
+    "StrokeProviderRegistry",
     "build_engine",
+    "default_registry",
+    "new_default_registry",
+    "parse_kanjidic2",
+    "parse_kanjivg",
+    "register_provider",
 ]

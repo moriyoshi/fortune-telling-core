@@ -10,12 +10,37 @@ from fortune_telling_core import (
 from fortune_telling_core.traditions.cjk_name_strokes import (
     CJK_NAME_STROKES_DECK,
     CJK_NAME_STROKES_SPREAD,
+    CjkNameStrokesEngine,
+    MappingStrokeProvider,
+    StrokeProviderRegistry,
     build_engine,
+    new_default_registry,
 )
 
+_SCHOOL_COUNTS = {"山": 3, "田": 5, "太": 4, "郎": 9}
 
-def test_cast_records_five_grid_and_trace_on_total_selection() -> None:
-    reading = build_engine().cast(_request())
+
+def _engine_with_provider(
+    name: str = "kanjidic2", *, version: str = "2024-01"
+) -> CjkNameStrokesEngine:
+    registry = new_default_registry()
+    registry.register(MappingStrokeProvider(name, version, _SCHOOL_COUNTS), name=name)
+    return build_engine(registry=registry)
+
+
+def _request(**options: str) -> ReadingRequest:
+    opts = {"surname": "山田", "given_name": "太郎"}
+    opts.update(options)
+    return ReadingRequest(
+        spread_id=CJK_NAME_STROKES_SPREAD.id,
+        deck_id=CJK_NAME_STROKES_DECK.id,
+        querent=Querent("native", "Native", {}),
+        options=opts,
+    )
+
+
+def test_cast_records_five_grid_and_resolved_counts_on_total_selection() -> None:
+    reading = _engine_with_provider().cast(_request(stroke_source="kanjidic2"))
 
     selections = {selection.position_id: selection for selection in reading.draw.selections}
     total = selections["total"].modifiers
@@ -26,10 +51,12 @@ def test_cast_records_five_grid_and_trace_on_total_selection() -> None:
     assert total["person"] == "9"
     assert total["earth"] == "13"
     assert total["outer"] == "12"
+    # The resolved per-character stroke counts are recorded on the reading.
     assert total["characters"] == "山田太郎"
     assert total["values"] == "山:3,田:5,太:4,郎:9"
-    assert total["value_system"] == "cjk_name_strokes.request.v1"
-    assert total["stroke_source"] == "request"
+    assert total["value_system"] == "kanjidic2"
+    assert total["value_system_version"] == "2024-01"
+    assert total["stroke_source"] == "kanjidic2"
 
     for position in ("heaven", "person", "earth", "outer"):
         modifiers = selections[position].modifiers
@@ -37,6 +64,18 @@ def test_cast_records_five_grid_and_trace_on_total_selection() -> None:
         assert modifiers["trace_position"] == "total"
 
     assert reading.summary == "CJK name stroke total 21; heaven 8; person 9; earth 13; outer 12."
+
+
+def test_unihan_table_is_the_default_source() -> None:
+    reading = build_engine().cast(_request())
+    total = reading.draw.selections[-1].modifiers
+    assert total is not None
+    assert total["stroke_source"] == "unihan"
+    assert total["value_system"] == "cjk_unihan_strokes.v1"
+    assert total["values"] == "山:3,田:5,太:4,郎:8"  # Unihan 郎 = 8
+    assert total["total"] == "20"
+    assert "stroke_source=unihan" in reading.provenance.notes
+    assert "value_system=cjk_unihan_strokes.v1" in reading.provenance.notes
 
 
 def test_option_values_are_recorded() -> None:
@@ -52,13 +91,8 @@ def test_option_values_are_recorded() -> None:
 
 
 def test_single_character_name_parts_use_virtual_strokes() -> None:
-    reading = build_engine().cast(
-        _request(
-            surname="山",
-            given_name="太",
-            strokes="山:3,太:4",
-        )
-    )
+    # Unihan: 山 = 3, 太 = 4.
+    reading = build_engine().cast(_request(surname="山", given_name="太"))
     total = reading.draw.selections[-1].modifiers
     assert total is not None
     assert total["total"] == "7"
@@ -82,8 +116,8 @@ def test_cast_replay_and_serde_are_deterministic() -> None:
 def test_provenance_stamps_system_and_value_system() -> None:
     reading = build_engine().cast(_request())
     assert "system=cjk_name_strokes" in reading.provenance.notes
-    assert "value_system=cjk_name_strokes.request.v1" in reading.provenance.notes
-    assert "stroke_source=request" in reading.provenance.notes
+    assert "value_system=cjk_unihan_strokes.v1" in reading.provenance.notes
+    assert "stroke_source=unihan" in reading.provenance.notes
     assert "grid=five_grid" in reading.provenance.notes
 
 
@@ -97,26 +131,13 @@ def test_validation_error_on_missing_name_parts() -> None:
         )
 
 
-def test_validation_error_on_missing_stroke_count() -> None:
+def test_validation_error_on_unknown_stroke_source() -> None:
     with pytest.raises(ValidationError):
-        build_engine().cast(_request(strokes="山:3,田:5,太:4"))
+        build_engine().cast(_request(stroke_source="does_not_exist"))
 
 
-def test_validation_error_on_bad_option() -> None:
+def test_validation_error_when_provider_lacks_a_character() -> None:
+    registry = StrokeProviderRegistry()
+    registry.register(MappingStrokeProvider("partial", "1", {"山": 3, "田": 5}), name="partial")
     with pytest.raises(ValidationError):
-        build_engine().cast(_request(stroke_source="unicode"))
-
-
-def _request(**options: str) -> ReadingRequest:
-    default_options = {
-        "surname": "山田",
-        "given_name": "太郎",
-        "strokes": "山:3,田:5,太:4,郎:9",
-    }
-    default_options.update(options)
-    return ReadingRequest(
-        spread_id=CJK_NAME_STROKES_SPREAD.id,
-        deck_id=CJK_NAME_STROKES_DECK.id,
-        querent=Querent("native", "Native", {}),
-        options=default_options,
-    )
+        build_engine(registry=registry).cast(_request(stroke_source="partial"))

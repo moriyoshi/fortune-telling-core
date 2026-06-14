@@ -20,12 +20,15 @@ from fortune_telling_core.traditions.cjk_name_strokes.deck import (
     CJK_NAME_STROKES_DECK,
     GRID_SYMBOLS,
 )
+from fortune_telling_core.traditions.cjk_name_strokes.providers import (
+    DEFAULT_PROVIDER,
+    StrokeCountProvider,
+    StrokeProviderRegistry,
+    default_registry,
+)
 from fortune_telling_core.traditions.cjk_name_strokes.spreads import CJK_NAME_STROKES_SPREAD
 
 _NULL_RNG = NullRng("CjkNameStrokesEngine.cast must not use randomness")
-
-VALUE_SYSTEM_ID = "cjk_name_strokes.request.v1"
-VALUE_SYSTEM_VERSION = "1"
 
 
 class School(StrEnum):
@@ -42,12 +45,6 @@ class CharacterSet(StrEnum):
     SIMPLIFIED = "simplified"
     SHINJITAI = "shinjitai"
     KYUJITAI = "kyujitai"
-
-
-class StrokeSource(StrEnum):
-    """Supported stroke-count sources."""
-
-    REQUEST = "request"
 
 
 class Grid(StrEnum):
@@ -71,10 +68,19 @@ class StrokeChart:
 
 
 class CjkNameStrokesEngine(AbstractEngine):
-    """CJK name stroke onomancy engine."""
+    """CJK name stroke onomancy engine.
+
+    Stroke counts are resolved by a named :class:`StrokeCountProvider` selected
+    via the ``stroke_source`` option (default ``"unihan"``, the bundled Unihan
+    table). Providers are looked up in ``registry`` — the process-wide default
+    registry unless one is injected.
+    """
 
     id = "cjk_name_strokes.engine"
     version = "0.1.0"
+
+    def __init__(self, *, registry: StrokeProviderRegistry | None = None) -> None:
+        self._registry = registry if registry is not None else default_registry()
 
     def deck(self, request: ReadingRequest) -> Deck:
         """Return the CJK name strokes deck."""
@@ -99,17 +105,18 @@ class CjkNameStrokesEngine(AbstractEngine):
         given_name = require_string(fields, "given_name")
         school = _parse(fields.get("school"), School.JAPANESE_SEIMEI_HANDAN)
         character_set = _parse(fields.get("character_set"), CharacterSet.SHINJITAI)
-        stroke_source = _parse(fields.get("stroke_source"), StrokeSource.REQUEST)
         grid = _parse(fields.get("grid"), Grid.FIVE_GRID)
-        strokes = _parse_strokes(require_string(fields, "strokes"))
+        provider_name = fields.get("stroke_source") or DEFAULT_PROVIDER
+        provider = self._registry.get(provider_name)
+        strokes = _resolve_strokes(surname, given_name, provider, provider_name)
         chart = _compute_chart(surname, given_name, strokes)
 
         common = {
-            "value_system": VALUE_SYSTEM_ID,
-            "value_system_version": VALUE_SYSTEM_VERSION,
+            "value_system": provider.id,
+            "value_system_version": provider.version,
             "school": school.value,
             "character_set": character_set.value,
-            "stroke_source": stroke_source.value,
+            "stroke_source": provider_name,
             "grid": grid.value,
         }
         trace = {
@@ -155,7 +162,7 @@ class CjkNameStrokesEngine(AbstractEngine):
         )
         notes = tuple(base.provenance.notes) + (
             "system=cjk_name_strokes",
-            f"value_system={VALUE_SYSTEM_ID}",
+            f"value_system={total['value_system']}",
             f"school={total['school']}",
             f"character_set={total['character_set']}",
             f"stroke_source={total['stroke_source']}",
@@ -166,6 +173,23 @@ class CjkNameStrokesEngine(AbstractEngine):
             summary=summary,
             provenance=replace(base.provenance, notes=notes, rng_kind=None, rng_seed=None),
         )
+
+
+def _resolve_strokes(
+    surname: str,
+    given_name: str,
+    provider: StrokeCountProvider,
+    provider_name: str,
+) -> dict[str, int]:
+    strokes: dict[str, int] = {}
+    for char in surname + given_name:
+        count = provider.stroke_count(char)
+        if count is None:
+            raise ValidationError(
+                f"stroke provider {provider_name!r} has no count for {char!r} (U+{ord(char):04X})"
+            )
+        strokes[char] = count
+    return strokes
 
 
 def _grid_selection(position_id: str, value: int, common: dict[str, str]) -> Selection:
@@ -217,22 +241,6 @@ def _compute_chart(surname: str, given_name: str, strokes: dict[str, int]) -> St
     )
 
 
-def _parse_strokes(text: str) -> dict[str, int]:
-    strokes: dict[str, int] = {}
-    if not text:
-        raise ValidationError("strokes must not be empty")
-    for part in text.split(","):
-        char, sep, raw_value = part.partition(":")
-        if not sep or len(char) != 1:
-            raise ValidationError(f"malformed stroke entry: {part!r}")
-        try:
-            value = int(raw_value)
-        except ValueError as exc:
-            raise ValidationError(f"stroke count must be an integer: {part!r}") from exc
-        strokes[char] = value
-    return strokes
-
-
 def _parse[T: StrEnum](value: str | None, default: T) -> T:
     if value is None or value == "":
         return default
@@ -242,7 +250,12 @@ def _parse[T: StrEnum](value: str | None, default: T) -> T:
         raise ValidationError(f"unsupported {type(default).__name__}: {value!r}") from exc
 
 
-def build_engine() -> CjkNameStrokesEngine:
-    """Create a CJK name stroke onomancy engine."""
+def build_engine(*, registry: StrokeProviderRegistry | None = None) -> CjkNameStrokesEngine:
+    """Create a CJK name stroke onomancy engine.
 
-    return CjkNameStrokesEngine()
+    Args:
+        registry: Stroke-provider registry to resolve ``stroke_source`` against;
+            defaults to the process-wide registry.
+    """
+
+    return CjkNameStrokesEngine(registry=registry)
