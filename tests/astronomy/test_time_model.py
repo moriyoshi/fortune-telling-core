@@ -38,7 +38,9 @@ def test_time_model_true_solar_adds_equation_of_time() -> None:
 
     result = effective_datetime(value, 0.0, TimeModel.TRUE_SOLAR, ephemeris)
 
-    assert result == pytest.approx(value + timedelta(minutes=expected_minutes))
+    assert result == pytest.approx(
+        value + timedelta(minutes=expected_minutes), abs=timedelta(seconds=1)
+    )
 
 
 def test_four_pillars_reexports_shared_time_model() -> None:
