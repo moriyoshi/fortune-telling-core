@@ -33,9 +33,20 @@ tradition-specific engines layered on top.
   `geomancy` (Western geomancy), and `iching` (I Ching).
   Computed traditions derive their draw from birth or identity data via `cast`:
   `astrology`, `four_pillars` (BaZi), `nine_star_ki`, `numerology` (Pythagorean),
-  `name_numerology`, `chaldean_numerology`, `can_chi` (Vietnamese), `thaksa` (Thai),
-  `weton` (Javanese), `celtic_tree` (Ogham tree zodiac), `haab` (Maya Haab'),
-  and `tzolkin` (Maya Tzolk'in).
+  `name_numerology`, `chaldean_numerology`, `hebrew_gematria`, `greek_isopsephy`,
+  `cyrillic_slavonic_numerals`, `cyrillic_pythagorean`, `cjk_name_strokes`
+  (五格 name strokes), `can_chi` (Vietnamese), `thaksa` (Thai), `weton` (Javanese),
+  `celtic_tree` (Ogham tree zodiac), `haab` (Maya Haab'), and `tzolkin`
+  (Maya Tzolk'in).
+
+Note on stroke counts: `cjk_name_strokes` resolves each character's stroke count
+from a pluggable provider, defaulting to the bundled Unicode Unihan table. Unihan
+records *representative-glyph* counts, which can differ from a divination
+school's — for example 郎 is **8** in Unihan but **9** in Japanese
+*seimei-handan*, so `田中太郎` totals 20 by default versus 21 traditionally. For
+tradition-faithful counts, register a stroke-count provider using your school's
+convention (e.g. parsed from KANJIDIC2/KanjiVG, which the library can parse but
+does not bundle) and select it via `stroke_source`.
 
 ## Quick Start
 
