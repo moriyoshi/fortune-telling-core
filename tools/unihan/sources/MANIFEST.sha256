@@ -1,0 +1,10 @@
+# SHA-256 checksums for vendored Unihan source archives.
+#
+# The Unihan database is published by Unicode, Inc. under the Unicode License
+# v3 (https://www.unicode.org/license.txt), which permits redistribution of
+# data files. See https://www.unicode.org/reports/tr38/ for field docs.
+#
+# The archive itself is a local cache under .cache/unihan/, not a
+# repository-managed source file. The manifest keeps a stable unihan/...
+# identifier even though the cache lives under .cache/.
+24b154691fc97cb44267b925d62064297086b3f896b57a8181c7b6d42702a026  unihan/Unihan-15.0.0.zip
