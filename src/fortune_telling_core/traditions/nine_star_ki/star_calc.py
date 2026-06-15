@@ -18,8 +18,9 @@ from fortune_telling_core.traditions.nine_star_ki.config import DayStarEscapemen
 from fortune_telling_core.traditions.nine_star_ki.lo_shu import fly_chart
 from fortune_telling_core.traditions.nine_star_ki.stars import HOME_STAR_BY_PALACE
 
-# 2000-01-07 is a Jia-Zi (甲子) day. (1984-02-02, sometimes cited as Jia-Zi, is
-# actually a Bing-Yin / 丙寅 day, two days later in the sexagenary cycle.)
+# 2000-01-07 is a Jia-Zi (甲子) day. Note: 1984-02-02 (this code's previous
+# anchor) is NOT Jia-Zi — 万年暦 lookups place it at Bing-Yin / 丙寅, two days
+# later in the cycle. 1984 is a Jia-Zi *year*, the likely source of the mix-up.
 DAY_JIAZI_JDN = julian_day_from_date(2000, 1, 7)
 
 
