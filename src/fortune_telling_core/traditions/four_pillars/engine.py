@@ -169,7 +169,7 @@ class FourPillarsEngine(AbstractEngine):
             f"time_model={birth.time_model.value}",
             f"day_boundary={birth.day_boundary.value}",
             "year_epoch=1984-jia-zi",
-            "day_epoch=1984-02-02-jia-zi",
+            "day_epoch=2000-01-07-jia-zi",
         )
         return replace(
             base,

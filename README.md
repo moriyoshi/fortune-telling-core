@@ -32,7 +32,9 @@ tradition-specific engines layered on top.
   `tarot`, `lenormand` (Petit Lenormand), `dominoes`, `runes` (Elder Futhark),
   `geomancy` (Western geomancy), and `iching` (I Ching).
   Computed traditions derive their draw from birth or identity data via `cast`:
-  `astrology`, `four_pillars` (BaZi), `nine_star_ki`, `numerology` (Pythagorean),
+  `astrology`, `four_pillars` (BaZi), `sanmeigaku` (算命学),
+  `sukuyo` (宿曜 lunar mansions), `koyomi` (暦注 day quality),
+  `zi_wei` (紫微斗数), `nine_star_ki`, `numerology` (Pythagorean),
   `name_numerology`, `chaldean_numerology`, `hebrew_gematria`, `greek_isopsephy`,
   `cyrillic_slavonic_numerals`, `cyrillic_pythagorean`, `cjk_name_strokes`
   (五格 name strokes), `can_chi` (Vietnamese), `thaksa` (Thai), `weton` (Javanese),

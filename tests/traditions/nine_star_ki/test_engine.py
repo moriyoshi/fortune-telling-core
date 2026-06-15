@@ -93,8 +93,8 @@ def test_request_day_star_escapement_override_changes_daily_star_and_provenance(
         selection for selection in alternate.draw.selections if selection.position_id == "daily"
     )
 
-    assert default_daily.symbol_id == "nsk.star.5"
-    assert alternate_daily.symbol_id == "nsk.star.8"
+    assert default_daily.symbol_id == "nsk.star.7"
+    assert alternate_daily.symbol_id == "nsk.star.1"
     assert "day_star_escapement=first_jiazi_after_solstice" in alternate.provenance.notes
 
 

@@ -1,7 +1,7 @@
 """Vietnamese Can Chi day and hour pillar computation.
 
 Both pillars are pure calendar arithmetic — no ephemeris is required. The day
-pillar shares Four Pillars' sexagenary anchor (1984-02-02 = Giáp Tý), so the
+pillar shares Four Pillars' sexagenary anchor (2000-01-07 = Giáp Tý), so the
 two traditions agree on every calendar day. The hour stem follows the same
 five-rat (ngũ thử độn) rule used across the Sino-xenic systems.
 """
@@ -14,8 +14,8 @@ from datetime import datetime, timedelta
 from fortune_telling_core.astronomy.julian import julian_day_from_date
 from fortune_telling_core.traditions.can_chi.config import DayBoundary
 
-# 1984-02-02 is the Giáp Tý day, shared with Four Pillars' DAY_JIAZI_JDN.
-_DAY_GIAPTY_JDN = julian_day_from_date(1984, 2, 2)
+# 2000-01-07 is a Giáp Tý day, shared with Four Pillars' DAY_JIAZI_JDN.
+_DAY_GIAPTY_JDN = julian_day_from_date(2000, 1, 7)
 
 
 @dataclass(frozen=True, slots=True)

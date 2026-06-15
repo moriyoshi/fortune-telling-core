@@ -58,8 +58,8 @@ def test_day_star_direction_pinned_by_fixed_sun() -> None:
     winter_arc = _day(datetime(2024, 1, 10, tzinfo=UTC), 315.0)
     summer_arc = _day(datetime(2024, 7, 10, tzinfo=UTC), 180.0)
 
-    assert winter_arc == (5, "forward")
-    assert summer_arc == (3, "backward")
+    assert winter_arc == (7, "forward")
+    assert summer_arc == (1, "backward")
 
 
 def test_day_star_escapement_school_can_shift_anchor() -> None:
@@ -68,11 +68,11 @@ def test_day_star_escapement_school_can_shift_anchor() -> None:
     jd_tt = jd_tt_from_utc(julian_day_utc(value))
 
     assert day_star(value, jd_tt, ephemeris, DayStarEscapement.JIAZI_AT_OR_BEFORE_SOLSTICE) == (
-        5,
+        7,
         "forward",
     )
     assert day_star(value, jd_tt, ephemeris, DayStarEscapement.FIRST_JIAZI_AFTER_SOLSTICE) == (
-        8,
+        1,
         "forward",
     )
 
