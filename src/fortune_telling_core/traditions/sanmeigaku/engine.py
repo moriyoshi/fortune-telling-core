@@ -150,8 +150,7 @@ def _summary_from_draw(draw: Draw) -> str:
         )
     )
     return (
-        f"Sanmeigaku centre star {center}. "
-        f"Main stars: {mains}. Subordinate stars: {subordinates}."
+        f"Sanmeigaku centre star {center}. Main stars: {mains}. Subordinate stars: {subordinates}."
     )
 
 

@@ -96,9 +96,7 @@ class ZiWeiEngine(AbstractEngine):
         tz_hours = offset.total_seconds() / 3600.0 if offset is not None else 0.0
         lunisolar = to_lunisolar(jd_tt, tz_hours=tz_hours, ephemeris=self.ephemeris)
         hour_branch = ((birth.birth_datetime.hour + 1) // 2) % 12
-        chart = compute_chart(
-            lunisolar.year, lunisolar.month, lunisolar.day, hour_branch
-        )
+        chart = compute_chart(lunisolar.year, lunisolar.month, lunisolar.day, hour_branch)
         return _draw_from_chart(chart)
 
     def cast(self, request: ReadingRequest) -> Reading:

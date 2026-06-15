@@ -21,7 +21,5 @@ _DESCRIPTIONS: dict[str, str] = {
 ZI_WEI_SPREAD = Spread(
     id="zi_wei.spread.twelve_palaces.v1",
     name="Zi Wei Twelve Palaces",
-    positions=tuple(
-        Position(slug, cjk, _DESCRIPTIONS[slug]) for slug, cjk in PALACES
-    ),
+    positions=tuple(Position(slug, cjk, _DESCRIPTIONS[slug]) for slug, cjk in PALACES),
 )

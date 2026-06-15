@@ -14,7 +14,12 @@ def _ganzhi(stem: int, branch: int):  # type: ignore[no-untyped-def]
 
 def test_rokuyo_mapping_and_anchor() -> None:
     assert [slug for slug, _, _ in ROKUYO] == [
-        "taian", "shakko", "sensho", "tomobiki", "sembu", "butsumetsu",
+        "taian",
+        "shakko",
+        "sensho",
+        "tomobiki",
+        "sembu",
+        "butsumetsu",
     ]
     # 旧暦 1/1 -> (1+1)%6 = 2 -> 先勝.
     assert rokuyo_index(1, 1) == 2

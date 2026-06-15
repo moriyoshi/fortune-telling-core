@@ -22,10 +22,32 @@ from dataclasses import dataclass
 from fortune_telling_core.traditions.four_pillars.sexagenary import annual_index, index_for
 
 BRANCH_CJK: tuple[str, ...] = (
-    "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥",
+    "子",
+    "丑",
+    "寅",
+    "卯",
+    "辰",
+    "巳",
+    "午",
+    "未",
+    "申",
+    "酉",
+    "戌",
+    "亥",
 )
 BRANCH_SLUG: tuple[str, ...] = (
-    "zi", "chou", "yin", "mao", "chen", "si", "wu", "wei", "shen", "you", "xu", "hai",
+    "zi",
+    "chou",
+    "yin",
+    "mao",
+    "chen",
+    "si",
+    "wu",
+    "wei",
+    "shen",
+    "you",
+    "xu",
+    "hai",
 )
 STEM_CJK: tuple[str, ...] = ("甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸")
 
@@ -79,8 +101,36 @@ MAJOR_STARS: tuple[Star, ...] = tuple(star for star, _ in _ZIWEI_SERIES) + tuple
 # 納音 element bureau number by sexagenary pair (index // 2): 水2 木3 金4 土5 火6.
 # Derived from the classic 六十甲子納音 (海中金 … 大海水).
 _NAYIN_BUREAU: tuple[int, ...] = (
-    4, 6, 3, 5, 4, 6, 2, 5, 4, 3, 2, 5, 6, 3, 2, 4, 6, 3, 5, 4,
-    6, 2, 5, 4, 3, 2, 5, 6, 3, 2,
+    4,
+    6,
+    3,
+    5,
+    4,
+    6,
+    2,
+    5,
+    4,
+    3,
+    2,
+    5,
+    6,
+    3,
+    2,
+    4,
+    6,
+    3,
+    5,
+    4,
+    6,
+    2,
+    5,
+    4,
+    3,
+    2,
+    5,
+    6,
+    3,
+    2,
 )
 
 

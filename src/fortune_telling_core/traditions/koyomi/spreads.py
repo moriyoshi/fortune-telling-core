@@ -11,7 +11,5 @@ from fortune_telling_core.spread import Position, Spread
 KOYOMI_SPREAD = Spread(
     id="koyomi.spread.day.v1",
     name="Koyomi Day Quality",
-    positions=(
-        Position("rokuyo", "Rokuyō", "The day's 六曜, with 干支 and 選日 annotations."),
-    ),
+    positions=(Position("rokuyo", "Rokuyō", "The day's 六曜, with 干支 and 選日 annotations."),),
 )

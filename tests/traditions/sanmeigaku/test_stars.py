@@ -48,8 +48,18 @@ def test_full_main_star_mapping_for_jia_day() -> None:
     # 通変星 -> 十大主星 for the 甲 day master against each of the ten stems.
     # 比肩貫索 劫財石門 食神鳳閣 傷官調舒 偏財禄存 正財司禄 偏官車騎 正官牽牛
     # 偏印龍高 印綬玉堂 — the standard (高尾) Sanmeigaku correspondence.
-    expected = ["貫索星", "石門星", "鳳閣星", "調舒星", "禄存星",
-                "司禄星", "車騎星", "牽牛星", "龍高星", "玉堂星"]
+    expected = [
+        "貫索星",
+        "石門星",
+        "鳳閣星",
+        "調舒星",
+        "禄存星",
+        "司禄星",
+        "車騎星",
+        "牽牛星",
+        "龍高星",
+        "玉堂星",
+    ]
     assert [main_star(0, source).cjk for source in range(10)] == expected
 
 
