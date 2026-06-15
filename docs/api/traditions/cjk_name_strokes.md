@@ -39,6 +39,15 @@ no preparation is needed (the example above uses it). These are
 counts that some *seimei-handan* schools require; the reading records
 `value_system=cjk_unihan_strokes.v1` so the basis is explicit.
 
+!!! warning "Unihan counts can differ from a school's"
+    A character's stroke count is glyph-dependent, and Unihan records the count
+    for its *representative* glyph. For example **郎 (U+90CE)** is **8** in
+    Unihan but **9** in the Japanese tradition (KANJIDIC lists "9, also 8"), so
+    `田中太郎` totals **20** under the Unihan default versus **21** under the
+    *seimei-handan* count. Where Unihan lists two values (zh-Hans then zh-Hant),
+    the bundled table keeps the first. For tradition-faithful counts, register a
+    provider (below) using the convention your school expects.
+
 ### Third-party dataset (a registered provider)
 
 For school-specific or higher-fidelity counts, register your own provider. **The

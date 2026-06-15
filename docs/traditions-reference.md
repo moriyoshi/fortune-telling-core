@@ -372,12 +372,21 @@ heaven, **人** person, **地** earth, **外** outer, **総** total — each jud
 against an 81-number table. **Schools disagree** on stroke counting (traditional
 Kangxi vs. modern forms), so the same name can yield different numbers.
 
-**In the library.** *Computed* from `surname`, `given_name`, and **caller-supplied
-stroke counts** (`strokes`, e.g. `山:3,田:5,太:4,郎:9`) — the library bundles no
-stroke database (a deliberate licensing/variant decision). Computes the five
-grids by the standard 熊崎式 formulas, including the single-character "spirit
-number" (霊数) rule; deck/spread = the five grid positions; `school` and
-`character_set` are recorded for provenance.
+**In the library.** *Computed* from `surname` and `given_name`. Stroke counts
+come from a named stroke-count **provider** selected by `stroke_source`; the
+bundled Unicode Unihan `kTotalStrokes` table is the default, so a name reads with
+no extra input. Computes the five grids by the standard 熊崎式 formulas, including
+the single-character "spirit number" (霊数) rule; the resolved per-character
+counts are recorded on the reading, and deck/spread = the five grid positions.
+
+**Caveat — counts can differ from a school's.** A character's stroke count is
+glyph-dependent, and the bundled Unihan counts are *representative-glyph* totals
+(UAX #38), **not** the Kangxi/old-form counts a *seimei-handan* school uses. For
+example 郎 is **8** in Unihan but **9** in the Japanese tradition, so `田中太郎`
+totals **20** by the Unihan default versus **21** traditionally. For
+tradition-faithful counts, register a provider — e.g. parsed from KANJIDIC2 /
+KanjiVG, which the library can parse but does not bundle (they are CC BY-SA
+share-alike) — and select it via `stroke_source`.
 
 ---
 
