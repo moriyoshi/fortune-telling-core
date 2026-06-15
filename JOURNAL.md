@@ -82,3 +82,36 @@ Mitigations going forward:
 - Treat sub-agent claims as unverified until independently sourced; prefer
   stating checkable facts ("this repo's previous anchor", "万年暦 shows 丙寅")
   over editorialising about prevalence.
+
+### Documentation completeness
+
+Adding a tradition touches more than its own package. The first pass updated the
+per-tradition API pages (`docs/api/traditions/*.md`), the mkdocs nav, and the
+README "Included Systems" list, but missed `docs/traditions-reference.md` — the
+prose reference with a Background / In-the-library section per tradition. Added
+sections for all four new traditions and corrected the implemented count to 27
+(it read "22"; it had in fact been off by one — 23 sections — before this work).
+Checklist for the next tradition: package files, tests, `docs/api/traditions/`,
+mkdocs nav, README list, **and** `docs/traditions-reference.md` (+ its count).
+
+### Test hardening (smoke → authoritative)
+
+A review pass replaced self-referential assertions (asserting what the engine
+itself emits) with checks against independently-known facts:
+- lunisolar — known 旧暦 dates including leap-month years.
+- koyomi — real published 最強開運日 (2024-01-01 甲子, 2024-03-15 戊寅, each
+  天赦日 + 一粒万倍日) plus rule-level checks against the documented 六曜 / 天赦日 /
+  一粒万倍日 / 三隣亡 tables.
+- sukuyo — the 13°20′ sidereal partition (longitude → mansion) and Lahiri /
+  Fagan-Bradley ayanamsa magnitudes at J2000.
+- zi_wei — 起紫微 against the canonical 水二局 / 火六局 day-tables, 五行局 from
+  known 納音 elements, 命宮 from the canonical month×hour table, and the
+  structural opposites 七殺對天府 / 破軍對天相.
+- sanmeigaku — the full 通変星 → 十大主星 mapping and 十二運 長生 anchors.
+
+A useful signal that the checks are real, not tautological: the new Sukuyō
+partition test caught a wrong *fixture* I wrote (180° is 角宿, not 氐宿). Open
+gap: `zi_wei` and `sanmeigaku` are validated component-by-component against
+canonical sub-tables, not against a full external worked chart — a trusted
+whole-chart fixture for either would be a worthwhile future addition. Suite:
+430 tests, ruff + mypy clean.
