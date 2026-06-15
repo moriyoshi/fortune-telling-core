@@ -6,7 +6,7 @@ mechanic, and what it is traditionally used for) and a note on how the library
 models it. It complements the per-module [API Reference](api/traditions/tarot.md);
 it does not replace it.
 
-The library implements **22 traditions**. Arabic **Abjad** numerology is
+The library implements **27 traditions**. Arabic **Abjad** numerology is
 deliberately *not* shipped (see [Cultural and religious context](#cultural-and-religious-context)).
 
 ---
@@ -196,6 +196,35 @@ Elements describes character and fortune over time.
 stems/branches; spread = the eight pillar slots. Surfaces element balance, Day
 Master strength, and luck pillars. Day boundary and time model are configurable.
 
+### Sanmeigaku (算命学)
+
+**Background.** A 20th-century Japanese fate system (systematized by Takao
+Yoshimasa) drawing on Chinese stem-branch theory. From the **year, month, and
+day** sexagenary pillars — the hour is not used — it builds a *body star chart*
+(人体星図) of five "main stars" (十大主星) and three "subordinate stars"
+(十二大従星), which rename the Four Pillars Ten-God relationships and twelve
+life-cycle stages.
+
+**In the library.** *Computed* from birth date-time, reusing the Four Pillars
+solar-term astronomy and Ten-God logic. Deck = the 10 main + 12 subordinate
+stars; spread = the eight stars keyed by their source stem/branch. The spatial
+人体星図 layout and the 初年/中年/晩年 labelling are left to interpretation; the
+principal hidden stem (元命) is configurable.
+
+### Zi Wei Dou Shu (紫微斗数)
+
+**Background.** "Purple Star Astrology," a Chinese system that arranges
+**fourteen major stars** (the 紫微 and 天府 series), plus many minor stars, across
+**twelve palaces** on the earthly branches, from the **lunar** birth year, month,
+day, and double-hour. Each palace governs a life domain (self, wealth, career,
+and so on).
+
+**In the library.** *Computed* from birth date-time via the bundled lunisolar
+converter. Deck = the 12 branches; spread = the 12 palaces, each carrying its
+branch, heavenly stem (五虎遁), and major stars. Includes 命宮/身宮 and the
+五行局. Minor stars and the 四化 transformations are out of scope (they reference
+stars beyond the majors and diverge between schools).
+
 ### Nine Star Ki (九星気学)
 
 **Background.** A Japanese system consolidated by Shinjirō Sonoda (1924) from
@@ -207,6 +236,31 @@ auspicious timing/direction.
 **In the library.** *Computed* from birth date-time. Deck = 9 stars; spread =
 principal/monthly/daily/tendency stars, with annual and monthly flying-star
 charts.
+
+### Sukuyō (宿曜)
+
+**Background.** A Japanese esoteric-Buddhist astrology transmitted through the
+*Xiuyao jing* (宿曜経) and rooted in the Indian **27 lunar mansions**
+(nakshatras). A person's **birth mansion** (本命宿) — the mansion the Moon
+occupied at birth — anchors character and compatibility readings.
+
+**In the library.** *Computed* from birth date-time using the bundled Moon
+ephemeris: the Moon's sidereal longitude over the 27 equal mansions. Deck = the
+27 mansions; spread = a single birth mansion. The ayanamsa (sidereal zero-point)
+is configurable; the traditional lunisolar-table method is not bundled.
+
+### Koyomi day annotations (暦注)
+
+**Background.** Japanese calendars carry *koyomi-chū* (暦注) day marks: the
+six-day **rokuyō** cycle (先勝・友引・先負・仏滅・大安・赤口), the day's sexagenary
+干支, and **select-day** marks such as 一粒万倍日, 三隣亡, and 天赦日 — used to
+judge a day's auspiciousness for events rather than to read a person.
+
+**In the library.** *Computed* for a target date via the lunisolar converter,
+the solar terms, and the sexagenary day count. Deck = the six rokuyō; spread = a
+single day, whose modifiers carry the 干支, sectional month, and select-day
+flags. (不成就日 and the calendrical 二十八宿 are omitted pending an authoritative
+definition.)
 
 ### Vietnamese Can Chi
 
