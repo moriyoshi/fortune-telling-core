@@ -51,3 +51,34 @@ calendars, and 2024-01-01 correctly resolves as both 天赦日 and 一粒万倍�
   verified, the feature was omitted rather than approximated.
 - 六星占術 and カタカムナ were deliberately skipped: their authoritative tables are
   proprietary / not cleanly sourceable.
+
+### Postmortem: an unsourced "commonly cited" claim in a code comment
+
+While fixing the day-pillar anchor I wrote a comment calling 1984-02-02 the
+"commonly cited" 甲子 day. That provenance claim was never sourced — a web
+search backs only that **1984 is a 甲子 *year*** (1924/1984/2044), not that the
+date is a widely-used 甲子-*day* anchor. The comment was corrected to state only
+verifiable facts (it was this code's previous anchor; 万年暦 lookups show 丙寅;
+the year/day conflation is the *likely* origin).
+
+Root cause, honestly:
+- **Laundering via an adjacent true fact.** The refutation (1984-02-02 = 丙寅)
+  was solidly sourced; "commonly cited" was added as explanatory colour in the
+  same sentence and borrowed the verified fact's credibility.
+- **Relaying agent output as established fact.** The phrasing traced to a
+  research sub-agent's unverified assertion ("many BaZi sources list it as 甲子")
+  plus a training-derived prior. Sub-agent output is a *claim*, not a citation.
+- **Plausibility from the very bug being explained.** 1984 *is* a 甲子 year, so
+  "commonly cited as a 甲子 day" rhymes with the year/day conflation that caused
+  the original bug — a false claim shaped like a true one.
+- **No verification gate on prose.** Numeric tables were all cross-checked
+  against canonical sources (or omitted when unverifiable); that same "verify or
+  omit" discipline was not applied to explanatory comments, which no test, type,
+  or lint check validates.
+
+Mitigations going forward:
+- Hold prose — especially provenance words like "commonly / standard / widely"
+  — to the same "cite it or don't claim it" bar as computed values.
+- Treat sub-agent claims as unverified until independently sourced; prefer
+  stating checkable facts ("this repo's previous anchor", "万年暦 shows 丙寅")
+  over editorialising about prevalence.
