@@ -125,7 +125,7 @@ class CanChiEngine(AbstractEngine):
         modifiers = dict(draw.selections[0].modifiers or {})
         notes = tuple(base.provenance.notes) + (
             f"day_boundary={modifiers.get('day_boundary', self.day_boundary.value)}",
-            "day_anchor=1984-02-02-giap-ty",
+            "day_anchor=2000-01-07-giap-ty",
         )
         return replace(
             base,

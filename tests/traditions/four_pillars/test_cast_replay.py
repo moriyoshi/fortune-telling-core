@@ -55,7 +55,8 @@ def test_late_zishi_changes_day_pillar() -> None:
         selection for selection in reading.draw.selections if selection.position_id == "day_stem"
     )
 
-    assert day_stem.symbol_id == "fp.stem.yi"
+    # 1984-02-02 is a 丙寅 day; late-zishi at 23:30 rolls to 1984-02-03 (丁卯).
+    assert day_stem.symbol_id == "fp.stem.ding"
 
 
 def test_time_model_switch_can_change_hour() -> None:

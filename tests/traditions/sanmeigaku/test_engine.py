@@ -15,8 +15,8 @@ from fortune_telling_core.traditions.sanmeigaku import (
     build_engine,
 )
 
-# 1984-02-02 is the day-pillar epoch (甲子). At noon JST the year pillar is the
-# pre-立春 癸亥 and the month pillar 乙丑, giving a stable reference chart.
+# 1984-02-02 is a 丙寅 day. At noon JST the year pillar is the pre-立春 癸亥 and
+# the month pillar 乙丑, giving a stable reference chart.
 _BIRTH = "1984-02-02T12:00:00+09:00"
 
 
@@ -34,14 +34,14 @@ def test_cast_records_expected_positions_and_stars() -> None:
         "day_branch_subordinate",
     )
     by_position = {s.position_id: s for s in reading.draw.selections}
-    # Day pillar 甲子: centre 主星 from 子 (元命 癸) is 玉堂星.
-    assert by_position["day_branch"].symbol_id == "sanmeigaku.main.gyokudo"
+    # Day pillar 丙寅: centre 主星 from 寅 (元命 甲) is 龍高星.
+    assert by_position["day_branch"].symbol_id == "sanmeigaku.main.ryuko"
     assert by_position["day_branch"].modifiers is not None
-    assert by_position["day_branch"].modifiers["day_master"] == "甲"
-    # 従星 of 甲 at 子 is 天恍星.
-    assert by_position["day_branch_subordinate"].symbol_id == "sanmeigaku.subordinate.tenkou"
+    assert by_position["day_branch"].modifiers["day_master"] == "丙"
+    # 従星 of 丙 at 寅 (長生) is 天貴星.
+    assert by_position["day_branch_subordinate"].symbol_id == "sanmeigaku.subordinate.tenki"
     assert reading.summary is not None
-    assert "玉堂星" in reading.summary
+    assert "龍高星" in reading.summary
 
 
 def test_cast_replay_and_serde_are_deterministic() -> None:

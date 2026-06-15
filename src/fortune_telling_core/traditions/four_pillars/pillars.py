@@ -17,7 +17,10 @@ from fortune_telling_core.traditions.four_pillars.solar_terms import (
     month_branch_index,
 )
 
-DAY_JIAZI_JDN = julian_day_from_date(1984, 2, 2)
+# 2000-01-07 is a Jia-Zi (甲子) day, the day-pillar sexagenary anchor. (The
+# commonly cited 1984-02-02 is in fact a Bing-Yin / 丙寅 day, two days later in
+# the cycle, so it must not be used as the Jia-Zi epoch.)
+DAY_JIAZI_JDN = julian_day_from_date(2000, 1, 7)
 
 
 @dataclass(frozen=True, slots=True)

@@ -19,9 +19,9 @@ def _at(year: int, month: int, day: int, hour: int = 12) -> datetime:
 @pytest.mark.parametrize(
     ("year", "month", "day", "expected"),
     [
-        (1984, 2, 2, "Giáp Tý"),  # shared anchor with Four Pillars.
-        (2000, 1, 1, "Bính Thìn"),
-        (1990, 4, 15, "Mậu Thân"),
+        (1984, 2, 2, "Bính Dần"),  # 丙寅 day (authoritative 万年暦).
+        (2000, 1, 1, "Mậu Ngọ"),  # 戊午 day.
+        (1990, 4, 15, "Canh Tuất"),  # 庚戌 day.
     ],
 )
 def test_known_day_pillars(year: int, month: int, day: int, expected: str) -> None:
@@ -53,8 +53,8 @@ def test_late_ty_boundary_advances_day_at_2300() -> None:
     midnight = compute_chart(_at(1984, 2, 2, hour=23), DayBoundary.MIDNIGHT)
     late_ty = compute_chart(_at(1984, 2, 2, hour=23), DayBoundary.LATE_TY)
 
-    assert (midnight.day.can_index, midnight.day.chi_index) == (0, 0)  # Giáp Tý
-    assert (late_ty.day.can_index, late_ty.day.chi_index) == (1, 1)  # Ất Sửu (next day)
+    assert (midnight.day.can_index, midnight.day.chi_index) == (2, 2)  # Bính Dần
+    assert (late_ty.day.can_index, late_ty.day.chi_index) == (3, 3)  # Đinh Mão (next day)
 
 
 def test_cat_and_buffalo_are_vietnamese_animals() -> None:

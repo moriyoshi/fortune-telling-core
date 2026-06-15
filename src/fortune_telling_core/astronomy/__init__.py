@@ -27,6 +27,12 @@ from fortune_telling_core.astronomy.julian import (
     julian_day_from_date,
     julian_day_utc,
 )
+from fortune_telling_core.astronomy.lunisolar import (
+    LunisolarDate,
+    civil_day_number,
+    new_moon_on_or_before,
+    to_lunisolar,
+)
 from fortune_telling_core.astronomy.position import EclipticPosition, normalize_degrees
 from fortune_telling_core.astronomy.solar import (
     equation_of_time,
@@ -51,8 +57,10 @@ __all__ = [
     "EphemerisError",
     "FixedEphemeris",
     "JIE_LONGITUDES",
+    "LunisolarDate",
     "TimeModel",
     "adjacent_jie_crossing",
+    "civil_day_number",
     "delta_t_seconds",
     "effective_datetime",
     "equation_of_time",
@@ -61,9 +69,11 @@ __all__ = [
     "julian_day_from_date",
     "julian_day_utc",
     "lichun_crossing",
+    "new_moon_on_or_before",
     "normalize_degrees",
     "solar_longitude_crossing",
     "solar_month_index",
     "solar_term_crossing",
     "sun_longitude",
+    "to_lunisolar",
 ]

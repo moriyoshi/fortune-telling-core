@@ -112,7 +112,7 @@ class SanmeigakuEngine(AbstractEngine):
             f"day_boundary={birth.day_boundary.value}",
             f"hidden_stem_rule={birth.hidden_stem_rule.value}",
             "pillars=year-month-day",
-            "day_epoch=1984-02-02-jia-zi",
+            "day_epoch=2000-01-07-jia-zi",
         )
         return replace(
             base,
