@@ -1,4 +1,6 @@
+from fortune_telling_core.traditions.four_pillars.sexagenary import index_for
 from fortune_telling_core.traditions.zi_wei.chart import (
+    _NAYIN_BUREAU,
     BRANCH_CJK,
     MAJOR_STARS,
     _ziwei_branch,
@@ -45,3 +47,22 @@ def test_life_palace_and_bureau_reference_chart() -> None:
     assert chart.ming_branch == _branch("亥")
     assert chart.bureau == 5
     assert chart.ziwei_branch == _branch("辰")
+
+
+def test_bureau_matches_known_nayin_elements() -> None:
+    # 五行局 = 納音 element of the 命宮 stem-branch (水2 木3 金4 土5 火6).
+    # Known 納音: 甲子海中金, 丙寅爐中火, 戊辰大林木, 庚午路旁土, 壬戌大海水.
+    stem = {"甲": 0, "丙": 2, "戊": 4, "庚": 6, "壬": 8}
+    branch = {"子": 0, "寅": 2, "辰": 4, "午": 6, "戌": 10}
+    cases = {("甲", "子"): 4, ("丙", "寅"): 6, ("戊", "辰"): 3, ("庚", "午"): 5, ("壬", "戌"): 2}
+    for (gan, zhi), bureau in cases.items():
+        pair = index_for(stem[gan], branch[zhi]) // 2
+        assert _NAYIN_BUREAU[pair] == bureau
+
+
+def test_life_palace_matches_canonical_month_hour_table() -> None:
+    # 命宮 from the canonical 安命宮 month x hour table (寅 starts month 1).
+    # month 1 / hour 子 -> 寅; month 1 / hour 亥 -> 卯; month 3 / hour 午 -> 戌.
+    assert compute_chart(2000, 1, 1, 0).ming_branch == _branch("寅")
+    assert compute_chart(2000, 1, 1, 11).ming_branch == _branch("卯")
+    assert compute_chart(2000, 3, 1, 6).ming_branch == _branch("戌")
