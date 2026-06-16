@@ -37,6 +37,18 @@ on the draw, so replays are ephemeris-free like the natal chart. The transiting
 set drops the South Node (the mirror of the North Node) to avoid doubled lines;
 aspect orbs are the same defaults used for natal aspects.
 
+### Structured aspects
+
+Aspects are also exposed as **structured data**, not just summary prose, so an
+interpretation layer can localize them without recomputing any astronomy. Each
+aspect is an entry in `Reading.draw.extras` — a `Selection` with
+`symbol_id = "astro.aspect.<type>"` (type ∈ conjunction / opposition / trine /
+square / sextile) and modifiers `first`, `second` (body ids), `orb`, and `kind`
+(`natal` or `transit`; for a transit, `first` is the transiting body and
+`second` the natal body). `extras` are draw selections not bound to a spread
+position, so they round-trip through serde and replay like everything else. The
+freeform summary is unchanged and always agrees with the structured set.
+
 ```python
 from datetime import UTC, datetime
 

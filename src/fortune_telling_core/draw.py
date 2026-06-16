@@ -86,6 +86,11 @@ class Draw:
         deck_id: Identifier of the deck used for all selections.
         spread_id: Identifier of the spread whose positions were filled.
         selections: Ordered selections, one per spread position.
+        extras: Optional structured selections that are *not* bound to a spread
+            position — variable-count, computed facts an engine wants to expose
+            for interpretation (e.g. astrology aspects). Unlike ``selections``
+            they carry no per-position uniqueness or spread-binding contract;
+            they default to empty and are serialized only when present.
 
     Raises:
         ValidationError: If identifiers are empty, there are no selections, or
@@ -95,6 +100,7 @@ class Draw:
     deck_id: str
     spread_id: str
     selections: Sequence[Selection]
+    extras: Sequence[Selection] = ()
 
     def __post_init__(self) -> None:
         if not self.deck_id:
@@ -108,19 +114,24 @@ class Draw:
         if len(set(position_ids)) != len(position_ids):
             raise ValidationError("draw must contain one selection per position")
         object.__setattr__(self, "selections", selections)
+        object.__setattr__(self, "extras", tuple(self.extras))
 
     def to_dict(self) -> JsonObject:
         """Serialize the draw to the stable JSON-compatible schema.
 
         Returns:
-            A dictionary containing deck, spread, and selection data.
+            A dictionary containing deck, spread, and selection data, plus
+            ``extras`` when any are present.
         """
 
-        return {
+        result: JsonObject = {
             "deck_id": self.deck_id,
             "spread_id": self.spread_id,
             "selections": [selection.to_dict() for selection in self.selections],
         }
+        if self.extras:
+            result["extras"] = [extra.to_dict() for extra in self.extras]
+        return result
 
     @classmethod
     def from_dict(cls, data: JsonMapping) -> Draw:
@@ -142,5 +153,9 @@ class Draw:
             selections=tuple(
                 Selection.from_dict(item)
                 for item in json_object_sequence(data.get("selections"), "selections")
+            ),
+            extras=tuple(
+                Selection.from_dict(item)
+                for item in json_object_sequence(data.get("extras") or [], "extras")
             ),
         )

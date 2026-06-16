@@ -10,7 +10,7 @@ from fortune_telling_core.traditions.astrology import (
     build_engine,
 )
 from fortune_telling_core.traditions.astrology.aspects import compute_cross_aspects
-from fortune_telling_core.traditions.astrology.bodies import Body
+from fortune_telling_core.traditions.astrology.bodies import POSITION_NAMES, Body
 from fortune_telling_core.traditions.astrology.ephemeris.protocol import Ephemeris
 from fortune_telling_core.traditions.astrology.positions import EclipticPosition
 
@@ -114,6 +114,73 @@ def test_transits_are_computed_at_as_of_not_birth() -> None:
     summary = build_engine(ephemeris).cast(_request(_AS_OF)).summary or ""
     assert "transit Sun squares natal Sun (orb 0.00 degrees)" in summary
     assert "transit Sun conjunct natal Sun" not in summary
+
+
+_ASPECT_TYPES = frozenset({"conjunction", "opposition", "trine", "square", "sextile"})
+_VERBS = {
+    "conjunction": "conjunct",
+    "opposition": "opposes",
+    "trine": "trines",
+    "square": "squares",
+    "sextile": "sextiles",
+}
+
+
+def test_natal_aspects_are_exposed_as_structured_extras() -> None:
+    extras = build_engine(_fixed_ephemeris()).cast(_request()).draw.extras
+    assert extras  # natal aspects always present
+    for extra in extras:
+        modifiers = extra.modifiers or {}
+        assert extra.position_id == "aspect"
+        assert extra.symbol_id.startswith("astro.aspect.")
+        assert extra.symbol_id.removeprefix("astro.aspect.") in _ASPECT_TYPES
+        assert set(modifiers) == {"first", "second", "orb", "kind"}
+        assert modifiers["kind"] == "natal"  # no transits without as_of
+
+
+def test_transit_aspects_are_exposed_as_structured_extras() -> None:
+    extras = build_engine(_fixed_ephemeris()).cast(_request(_AS_OF)).draw.extras
+    transit = [e for e in extras if (e.modifiers or {})["kind"] == "transit"]
+    assert transit
+    # The time-independent fixed ephemeris places each transiting body on its
+    # natal longitude, so e.g. transit Sun is an exact conjunction to natal Sun.
+    sun = next(
+        e
+        for e in transit
+        if e.symbol_id == "astro.aspect.conjunction"
+        and (e.modifiers or {})["first"] == "sun"
+        and (e.modifiers or {})["second"] == "sun"
+    )
+    assert (sun.modifiers or {})["orb"] == "0.00"
+    # The mirror node is excluded from the transiting set.
+    assert all((e.modifiers or {})["first"] != "south_node" for e in transit)
+
+
+def test_structured_aspects_are_consistent_with_the_summary() -> None:
+    # Every structured aspect must be reflected verbatim in the freeform summary,
+    # so the two representations never disagree.
+    reading = build_engine().cast(_request(_AS_OF))  # built-in ephemeris
+    summary = reading.summary or ""
+    for extra in reading.draw.extras:
+        modifiers = extra.modifiers or {}
+        verb = _VERBS[extra.symbol_id.removeprefix("astro.aspect.")]
+        orb = modifiers["orb"]
+        if modifiers["kind"] == "natal":
+            line = f"{modifiers['first']} {verb} {modifiers['second']} (orb {orb} degrees)"
+        else:
+            first = POSITION_NAMES[modifiers["first"]]
+            second = POSITION_NAMES[modifiers["second"]]
+            line = f"transit {first} {verb} natal {second} (orb {orb} degrees)"
+        assert line in summary, line
+
+
+def test_structured_extras_survive_serde_and_replay() -> None:
+    request = _request(_AS_OF)
+    reading = build_engine(_fixed_ephemeris()).cast(request)
+    assert reading.draw.extras  # populated
+    assert reading_from_json(reading_to_json(reading)).draw.extras == reading.draw.extras
+    replayed = build_engine(RaisingEphemeris()).replay(request, reading.draw)
+    assert replayed.draw.extras == reading.draw.extras
 
 
 def test_no_as_of_keeps_a_pure_natal_chart() -> None:
