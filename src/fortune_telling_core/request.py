@@ -77,9 +77,15 @@ class ReadingRequest:
         querent: Optional querent metadata.
         options: Engine-specific string options.
         requested_at: Timezone-aware request timestamp.
+        as_of: Optional timezone-aware moment the reading should be computed
+            *for*. Traditions that report time-varying fortunes (luck/annual
+            pillars, flying-star charts, almanac days, transits) read this as
+            the reference point, falling back to ``requested_at`` when unset.
+            This is the unified successor to the per-tradition ``target_year`` /
+            ``target_datetime`` options, which still override it.
 
     Raises:
-        ValidationError: If identifiers, options, or timestamp are invalid.
+        ValidationError: If identifiers, options, or timestamps are invalid.
     """
 
     spread_id: str
@@ -87,6 +93,7 @@ class ReadingRequest:
     querent: Querent | None = None
     options: Mapping[str, str] | None = None
     requested_at: datetime = field(default_factory=utc_now)
+    as_of: datetime | None = None
 
     def __post_init__(self) -> None:
         if not self.spread_id:
@@ -94,7 +101,20 @@ class ReadingRequest:
         if not self.deck_id:
             raise ValidationError("request deck_id must not be empty")
         ensure_aware(self.requested_at, "requested_at")
+        if self.as_of is not None:
+            ensure_aware(self.as_of, "as_of")
         object.__setattr__(self, "options", str_mapping(self.options, "options"))
+
+    @property
+    def effective_at(self) -> datetime:
+        """Reference moment for time-varying fortunes.
+
+        Returns ``as_of`` when set, otherwise ``requested_at``. This is the
+        single source of truth a tradition should consult when it needs the
+        "as of" moment but has no explicit per-tradition override.
+        """
+
+        return self.as_of if self.as_of is not None else self.requested_at
 
     def to_dict(self) -> JsonObject:
         """Serialize the request to a JSON-compatible dictionary."""
@@ -105,6 +125,8 @@ class ReadingRequest:
             "options": dict(self.options or {}),
             "requested_at": self.requested_at.isoformat(),
         }
+        if self.as_of is not None:
+            result["as_of"] = self.as_of.isoformat()
         if self.querent is not None:
             result["querent"] = self.querent.to_dict()
         return result
@@ -130,6 +152,7 @@ class ReadingRequest:
             else Querent.from_dict(json_object(querent_data, "querent"))
         )
         requested_at = data.get("requested_at")
+        as_of = data.get("as_of")
         return cls(
             spread_id=require_str(data, "spread_id"),
             deck_id=require_str(data, "deck_id"),
@@ -138,4 +161,5 @@ class ReadingRequest:
             requested_at=utc_now()
             if requested_at is None
             else parse_datetime(requested_at, "requested_at"),
+            as_of=None if as_of is None else parse_datetime(as_of, "as_of"),
         )

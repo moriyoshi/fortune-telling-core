@@ -45,4 +45,10 @@ Star 1 or Star 9 is anchored to the Jia-Zi day at or before the active solstice.
 to the first Jia-Zi day after the relevant solstice. The selected value is recorded in
 `Reading.provenance.notes`.
 
+## Annual chart year
+
+The annual flying-star chart year is resolved most-specific-first: an explicit `target_year`
+attribute wins, then the request-level [`as_of`](../core.md#natal-vs-timed-readings) moment, then the
+engine's build-time `target_year`, then `requested_at`.
+
 ::: fortune_telling_core.traditions.nine_star_ki

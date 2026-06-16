@@ -50,5 +50,5 @@ def parse_birth_data(request: ReadingRequest, default_luck_count: int) -> FourPi
         time_model=TimeModel(values.get("time_model", TimeModel.CLOCK.value)),
         day_boundary=DayBoundary(values.get("day_boundary", DayBoundary.MIDNIGHT.value)),
         luck_count=luck_count,
-        target_year=int(values.get("target_year", str(request.requested_at.year))),
+        target_year=int(values.get("target_year") or request.effective_at.year),
     )

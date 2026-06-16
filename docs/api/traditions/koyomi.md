@@ -24,4 +24,8 @@ request = ReadingRequest(
 reading = build_engine().cast(request)
 ```
 
+The day to evaluate may also be supplied as the request-level
+[`as_of`](../core.md#natal-vs-timed-readings) moment instead of the `target_datetime` attribute;
+an explicit `target_datetime` takes precedence when both are given.
+
 ::: fortune_telling_core.traditions.koyomi

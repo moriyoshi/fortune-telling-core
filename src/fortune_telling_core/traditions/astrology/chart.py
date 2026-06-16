@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from fortune_telling_core.astronomy.deltat import jd_tt_from_utc
 from fortune_telling_core.astronomy.ephemeris.protocol import Ephemeris
 from fortune_telling_core.astronomy.julian import julian_day_utc
@@ -22,10 +24,14 @@ from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART
 from fortune_telling_core.traditions.astrology.zodiac import SIDEREAL_ZODIAC, TROPICAL_ZODIAC
 
 
-def cast_draw(birth: BirthData, ephemeris: Ephemeris) -> Draw:
+def cast_draw(
+    birth: BirthData, ephemeris: Ephemeris, *, transit_at: datetime | None = None
+) -> Draw:
     jd_ut = julian_day_utc(birth.birth_datetime)
     jd_tt = jd_tt_from_utc(jd_ut)
     angles = compute_angles(jd_ut, jd_tt, birth.latitude, birth.longitude)
+
+    transit_jd_tt = None if transit_at is None else jd_tt_from_utc(julian_day_utc(transit_at))
 
     ascendant = _zodiac_longitude(angles.ascendant, birth, jd_tt)
     midheaven = _zodiac_longitude(angles.midheaven, birth, jd_tt)
@@ -43,8 +49,21 @@ def cast_draw(birth: BirthData, ephemeris: Ephemeris) -> Draw:
     for body in PLANETARY_BODIES:
         position = ephemeris.position(body, jd_tt)
         longitude = _zodiac_longitude(position.longitude, birth, jd_tt)
+        extra: dict[str, str] | None = None
+        if transit_jd_tt is not None and transit_at is not None:
+            transit = ephemeris.position(body, transit_jd_tt)
+            transit_longitude = _zodiac_longitude(transit.longitude, birth, transit_jd_tt)
+            extra = {
+                "transit_longitude": f"{transit_longitude:.6f}",
+                "transit_speed": f"{transit.speed:.6f}",
+                "transit_retrograde": "true" if transit.speed < 0.0 else "false",
+            }
+            if body is PLANETARY_BODIES[0]:
+                extra["transit_at"] = transit_at.isoformat()
         selections.append(
-            _selection(body.value, longitude, position.speed, house_of(longitude, houses))
+            _selection(
+                body.value, longitude, position.speed, house_of(longitude, houses), extra=extra
+            )
         )
 
     selections.append(
@@ -68,7 +87,14 @@ def _zodiac_longitude(longitude: float, birth: BirthData, jd_tt: float) -> float
     return longitude
 
 
-def _selection(position_id: str, longitude: float, speed: float, house: int) -> Selection:
+def _selection(
+    position_id: str,
+    longitude: float,
+    speed: float,
+    house: int,
+    *,
+    extra: dict[str, str] | None = None,
+) -> Selection:
     modifiers = {
         "degree": f"{degree_in_sign(longitude):.6f}",
         "house": str(house),
@@ -76,4 +102,6 @@ def _selection(position_id: str, longitude: float, speed: float, house: int) -> 
         "retrograde": "true" if speed < 0.0 else "false",
         "speed": f"{speed:.6f}",
     }
+    if extra is not None:
+        modifiers.update(extra)
     return Selection(position_id=position_id, symbol_id=sign_id(longitude), modifiers=modifiers)

@@ -60,8 +60,32 @@ def compute_aspects(
     return tuple(aspects)
 
 
-def render_aspects(aspects: Sequence[Aspect]) -> str | None:
+def compute_cross_aspects(
+    transit: Mapping[str, float],
+    natal: Mapping[str, float],
+    aspect_defs: Sequence[AspectDef] = DEFAULT_ASPECTS,
+) -> tuple[Aspect, ...]:
+    """Aspects between two bodies of positions (e.g. transiting vs natal).
+
+    Unlike :func:`compute_aspects`, every transit position is tested against
+    every natal position (a full cross product), since the two maps describe
+    different charts rather than one.
+    """
+
+    aspects: list[Aspect] = []
+    for first, first_longitude in transit.items():
+        for second, second_longitude in natal.items():
+            distance = angular_distance(first_longitude, second_longitude)
+            for definition in aspect_defs:
+                orb = abs(distance - definition.angle)
+                if orb <= definition.orb:
+                    aspects.append(Aspect(first, second, definition, orb))
+                    break
+    return tuple(aspects)
+
+
+def render_aspects(aspects: Sequence[Aspect], *, heading: str = "Aspects") -> str | None:
     if not aspects:
         return None
     rendered = "; ".join(aspect.render() for aspect in aspects)
-    return f"Aspects: {rendered}."
+    return f"{heading}: {rendered}."
