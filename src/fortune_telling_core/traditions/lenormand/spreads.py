@@ -12,14 +12,14 @@ THREE_CARD = Spread(
     id="lenormand.spread.three.v1",
     name="Three Card Line",
     positions=(
-        Position("left", "Left", "Background, modifying the centre."),
-        Position("center", "Centre", "The heart of the matter."),
-        Position("right", "Right", "Outcome, modifying the centre."),
+        Position("left", "Left", "Background, modifying the center."),
+        Position("center", "Center", "The heart of the matter."),
+        Position("right", "Right", "Outcome, modifying the center."),
     ),
 )
 
 # The Grand Tableau lays out the entire deck in a 4x9 (plus 8x4+4) grid; here it
-# is modelled as 36 ordered positions consuming every card.
+# is modeled as 36 ordered positions consuming every card.
 GRAND_TABLEAU = Spread(
     id="lenormand.spread.grand-tableau.v1",
     name="Grand Tableau",

@@ -6,7 +6,7 @@ __path__ = extend_path(__path__, __name__)
 The package exposes the eight-graha deck, the eight-house Thaksa spread, and an
 engine builder that deterministically seats the grahas into a querent's houses
 from their birth datetime. The result drives Thai name and number divination:
-the Boriwan ruler and its lucky colour, Buddha posture, and planetary strength,
+the Boriwan ruler and its lucky color, Buddha posture, and planetary strength,
 plus the inauspicious Kalakini graha.
 
 Example:

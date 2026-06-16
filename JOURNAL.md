@@ -267,3 +267,31 @@ Interpreter follow-up (their repo): map `astro.aspect.<type>` × `kind` to
 localized text (5 types × natal/transit), add a `_candidate_keys` branch for
 `astro.aspect.*`, and render Aspects/Transits blocks. No further core change
 needed for that.
+
+## 2026-06-16 — Fix British spellings in generated summaries (American-English contract)
+
+`Reading.summary` is contractually "always plain American English", but two
+traditions emitted British spellings — caught by report, not the gate:
+- **sanmeigaku** summary said "Sanmeigaku centre star …" → "center".
+- **thaksa** summary said "(colour …)" → "color", and Rahu's lucky-color *data*
+  was "grey" (`grahas.py`) → "gray", which surfaces verbatim in the summary.
+
+Root cause was a coverage gap: `test_summary_contract.py` only checked three
+traditions (astrology, four_pillars, nine_star_ki) and its banned list didn't
+even include "grey". Strengthened it: banned list widened (grey, honour, metre,
+defence, catalogue, …); summary casts added for sanmeigaku, thaksa, zi_wei, and
+koyomi (thaksa uses a Wednesday-night birth so the Rahu/"gray" path is actually
+exercised); and a dedicated `test_thaksa_graha_colors_are_american_english`
+checks the color *data* directly, since a British color value would slip past
+templates on any non-Rahu birth.
+
+Also corrected adjacent non-summary British spellings for consistency (the same
+American-English standard): lenormand cross-spread position name "Centre" →
+"Center" and its descriptions, plus several docstrings/comments. A comprehensive
+grep confirms no British spellings remain in summary-flowing code. The tarot
+card "Judgement" is left as-is — it is the canonical RWS card title and the
+symbol slug (changing it would break interpreter keys). Suite: 466 tests, ruff +
+mypy (src + tests) clean.
+
+Note: changing the thaksa graha color value and the lenormand position name are
+minor *display*-data changes (not computational), appropriate for a v1.1.0.

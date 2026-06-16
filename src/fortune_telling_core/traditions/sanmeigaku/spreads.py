@@ -7,7 +7,7 @@ used). The chart yields eight stars: five 主星 (main stars) and three 従星
 Positions are named by their *source* — the stem or branch the star is derived
 from — rather than by the geographic 人体星図 cell (北/南/東/西/中央 and the
 shoulder/foot positions). The spatial arrangement and the 初年/中年/晩年 life-
-stage labelling vary between teachers and are a presentation concern for an
+stage labeling vary between teachers and are a presentation concern for an
 interpretation layer; the structural facts recorded here are which star each
 source yields.
 """
@@ -33,7 +33,7 @@ SANMEIGAKU_SPREAD = Spread(
         Position(
             "day_branch",
             "Day Branch Star",
-            "主星 from the day branch principal hidden stem (日支元命); the chart centre.",
+            "主星 from the day branch principal hidden stem (日支元命); the chart center.",
         ),
         Position(
             "year_branch_subordinate",

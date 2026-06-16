@@ -169,14 +169,14 @@ def _summary_from_draw(draw: Draw) -> str:
         )
     )
     natal = (
-        f"Sanmeigaku centre star {center}. Main stars: {mains}. Subordinate stars: {subordinates}."
+        f"Sanmeigaku center star {center}. Main stars: {mains}. Subordinate stars: {subordinates}."
     )
     return natal + _periods_text(by_position["day_branch"].modifiers or {})
 
 
-def _periods_text(centre: Mapping[str, str]) -> str:
-    day_stem = int(centre["day_stem_index"])
-    target_year = int(centre["target_year"])
+def _periods_text(center: Mapping[str, str]) -> str:
+    day_stem = int(center["day_stem_index"])
+    target_year = int(center["target_year"])
 
     annual = annual_stars(day_stem, target_year)
     parts = [
@@ -184,21 +184,21 @@ def _periods_text(centre: Mapping[str, str]) -> str:
         f"主星 {annual.main.cjk}, 従星 {annual.subordinate.cjk}."
     ]
 
-    if "luck_direction" in centre:
-        forward = centre["luck_direction"] == "forward"
+    if "luck_direction" in center:
+        forward = center["luck_direction"] == "forward"
         columns = daiun_columns(
             day_stem,
-            int(centre["month_cycle_index"]),
+            int(center["month_cycle_index"]),
             forward=forward,
-            start_age=float(centre["luck_start_age"]),
-            count=int(centre["luck_count"]),
+            start_age=float(center["luck_start_age"]),
+            count=int(center["luck_count"]),
         )
         rendered = ", ".join(
             f"{column.stars.cjk}@{column.start_age:.0f}"
             f"(主星 {column.stars.main.cjk}/従星 {column.stars.subordinate.cjk})"
             for column in columns
         )
-        parts.append(f" Daiun ({centre['luck_direction']}): {rendered}.")
+        parts.append(f" Daiun ({center['luck_direction']}): {rendered}.")
 
     return "".join(parts)
 
