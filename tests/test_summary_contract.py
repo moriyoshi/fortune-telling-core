@@ -4,7 +4,16 @@ from fortune_telling_core import Querent, ReadingRequest
 from fortune_telling_core.astronomy.bodies import Body
 from fortune_telling_core.astronomy.ephemeris.fixed import FixedEphemeris
 from fortune_telling_core.astronomy.position import EclipticPosition
-from fortune_telling_core.traditions import astrology, four_pillars, nine_star_ki
+from fortune_telling_core.traditions import (
+    astrology,
+    four_pillars,
+    koyomi,
+    nine_star_ki,
+    sanmeigaku,
+    thaksa,
+    zi_wei,
+)
+from fortune_telling_core.traditions.thaksa.grahas import GRAHAS
 
 _NON_AMERICAN_SPELLINGS = (
     "analyse",
@@ -12,10 +21,14 @@ _NON_AMERICAN_SPELLINGS = (
     "analyses",
     "analysing",
     "behaviour",
+    "calibre",
+    "catalogue",
     "centre",
     "centred",
     "colour",
     "colours",
+    "defence",
+    "dialogue",
     "emphasise",
     "emphasised",
     "emphasises",
@@ -23,11 +36,22 @@ _NON_AMERICAN_SPELLINGS = (
     "favour",
     "favoured",
     "favours",
+    "fibre",
+    "fulfil",
+    "grey",
+    "honour",
+    "labelled",
+    "labelling",
+    "licence",
+    "metre",
+    "modelled",
     "neighbour",
+    "offence",
     "organise",
     "organised",
     "organises",
     "organising",
+    "travelled",
 )
 
 
@@ -36,6 +60,10 @@ def test_generated_summaries_use_american_english() -> None:
         _astrology_summary(),
         _four_pillars_summary(),
         _nine_star_ki_summary(),
+        _sanmeigaku_summary(),
+        _thaksa_summary(),
+        _zi_wei_summary(),
+        _koyomi_summary(),
     )
 
     for summary in summaries:
@@ -43,6 +71,14 @@ def test_generated_summaries_use_american_english() -> None:
         lower_summary = summary.lower()
         for spelling in _NON_AMERICAN_SPELLINGS:
             assert spelling not in lower_summary
+
+
+def test_thaksa_graha_colors_are_american_english() -> None:
+    # The ruling graha's color surfaces in the summary, so a British color value
+    # (e.g. "grey") would slip past templates regardless of the birth day. Guard
+    # the data directly.
+    for graha in GRAHAS:
+        assert graha.color not in _NON_AMERICAN_SPELLINGS, graha.color
 
 
 def _astrology_summary() -> str | None:
@@ -105,3 +141,52 @@ def _nine_star_ki_summary() -> str | None:
     )
     ephemeris = FixedEphemeris({Body.SUN: EclipticPosition(315.0, 1.0)})
     return nine_star_ki.build_engine(ephemeris).cast(request).summary
+
+
+def _sanmeigaku_summary() -> str | None:
+    # gender exercises the 大運 luck-cycle branch in addition to 年運.
+    request = ReadingRequest(
+        spread_id=sanmeigaku.SANMEIGAKU_SPREAD.id,
+        deck_id=sanmeigaku.SANMEIGAKU_DECK.id,
+        querent=Querent(
+            "native",
+            "Native",
+            {"birth_datetime": "1984-02-02T12:00:00+09:00", "gender": "female"},
+        ),
+        requested_at=datetime(2024, 6, 1, tzinfo=UTC),
+    )
+    return sanmeigaku.build_engine().cast(request).summary
+
+
+def _thaksa_summary() -> str | None:
+    # A Wednesday birth at/after 18:00 rules under Rahu, whose lucky color is the
+    # one most at risk of a British spelling ("gray").
+    request = ReadingRequest(
+        spread_id=thaksa.THAKSA_SPREAD.id,
+        deck_id=thaksa.THAKSA_DECK.id,
+        querent=Querent("native", "Native", {"birth_datetime": "1990-01-03T20:00:00+07:00"}),
+    )
+    return thaksa.build_engine().cast(request).summary
+
+
+def _zi_wei_summary() -> str | None:
+    request = ReadingRequest(
+        spread_id=zi_wei.ZI_WEI_SPREAD.id,
+        deck_id=zi_wei.ZI_WEI_DECK.id,
+        querent=Querent(
+            "native",
+            "Native",
+            {"birth_datetime": "1985-04-29T10:00:00+08:00", "gender": "male"},
+        ),
+        requested_at=datetime(2026, 6, 15, tzinfo=UTC),
+    )
+    return zi_wei.build_engine().cast(request).summary
+
+
+def _koyomi_summary() -> str | None:
+    request = ReadingRequest(
+        spread_id=koyomi.KOYOMI_SPREAD.id,
+        deck_id=koyomi.KOYOMI_DECK.id,
+        querent=Querent("native", "Native", {"target_datetime": "2024-01-01T12:00:00+09:00"}),
+    )
+    return koyomi.build_engine().cast(request).summary

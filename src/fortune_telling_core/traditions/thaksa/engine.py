@@ -26,7 +26,7 @@ class ThaksaEngine(AbstractEngine):
 
     The engine deterministically derives a querent's birth-day ruling graha and
     seats the eight grahas into the eight Thaksa houses, surfacing the ruler's
-    lucky colour, Buddha posture, planetary strength, and the inauspicious
+    lucky color, Buddha posture, planetary strength, and the inauspicious
     Kalakini graha. A Wednesday birth at or after 18:00 rules under Rahu
     (Wednesday night).
     """
@@ -123,7 +123,7 @@ def _summary_from_draw(draw: Draw) -> str:
     night = " (night)" if common["wednesday_night"] == "true" else ""
     return (
         f"Ruling graha {common['ruler']}{night} "
-        f"(colour {common['ruler_color']}, strength {common['strength']}, "
+        f"(color {common['ruler_color']}, strength {common['strength']}, "
         f"{common['buddha_posture']}). Kalakini: {common['kalakini']}."
     )
 

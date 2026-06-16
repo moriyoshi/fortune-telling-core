@@ -3,7 +3,7 @@
 The eight Thaksa grahas (อัฏฐเคราะห์) are ordered in the canonical Thaksa
 sequence — Sun, Moon, Mars, Mercury, Saturn, Jupiter, Rahu, Venus — which is
 the order the planets are laid into the eight houses starting from a person's
-birth-day ruler. Each graha carries its weekday rulership, lucky colour,
+birth-day ruler. Each graha carries its weekday rulership, lucky color,
 day-of-birth Buddha posture (ปางประจำวัน), and planetary strength
 (กำลังพระเคราะห์) used throughout Thai name and number divination.
 """
@@ -41,7 +41,7 @@ GRAHAS: tuple[Graha, ...] = (
     Graha(3, "phut", "Mercury", "พุธ", "green", "Pang Um Bat", 17),
     Graha(4, "sao", "Saturn", "เสาร์", "black", "Pang Nak Prok", 10),
     Graha(5, "pharuehat", "Jupiter", "พฤหัสบดี", "orange", "Pang Samathi", 19),
-    Graha(6, "rahu", "Rahu", "ราหู", "grey", "Pang Pa Lelai", 12),
+    Graha(6, "rahu", "Rahu", "ราหู", "gray", "Pang Pa Lelai", 12),
     Graha(7, "suk", "Venus", "ศุกร์", "blue", "Pang Ramphueng", 21),
 )
 

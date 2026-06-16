@@ -32,7 +32,7 @@ def draw_from_pillars(
 ) -> Draw:
     """Build a Sanmeigaku draw from the year, month, and day pillars.
 
-    The centre (``day_branch``) selection also carries the inputs needed to
+    The center (``day_branch``) selection also carries the inputs needed to
     re-derive the time-varying 年運 and 大運 from the draw alone, so a replay
     reproduces them without touching the ephemeris.
     """
