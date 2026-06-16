@@ -230,3 +230,40 @@ file is git-ignored, and `tests/test_package.py` asserts the runtime version
 equals the installed distribution metadata instead of pinning a literal. No
 version string is hardcoded anywhere, so `__version__` becomes `1.0.0`
 automatically once the `v1.0.0` tag is cut.
+
+## 2026-06-16 — Structured astrology aspects (handoff from the interpreter)
+
+The interpreter package flagged that astrology "only renders a natal fate": core
+*computes* both aspect sets (natal via `compute_aspects`, transit-to-natal via
+`compute_cross_aspects`) but discarded the structure into the freeform
+`Reading.summary`, so the position-keyed `interpret()` could not see aspects or
+anything `as_of`. The calculation belongs upstream (interpreter must not redo
+astronomy), so core now exposes the structure.
+
+Added a generic `Draw.extras: Sequence[Selection]` — structured selections *not*
+bound to a spread position (variable count, no per-position uniqueness), default
+empty, serialized only when present. This sidesteps the strict
+selections↔spread-positions 1:1 binding (enforced in `Draw.__post_init__` and
+`AbstractEngine._interpret`) that makes variable-count aspects impossible to put
+in `selections`.
+
+The astrology engine emits each aspect as an extra: `symbol_id =
+"astro.aspect.<type>"`, modifiers `{first, second, orb, kind}` with
+`kind ∈ {natal, transit}` (for a transit, `first` is the transiting body). Natal
+always; transit only when `request.as_of` is set — mirroring the summary gating.
+The aspects are computed in `cast_draw` (from the same longitude maps, reusing
+`compute_aspects`/`compute_cross_aspects`); the summary code is untouched, and a
+test asserts every structured aspect appears verbatim in the summary so the two
+never diverge. Extras round-trip through serde and replay (verified
+ephemeris-free).
+
+This is additive and backward-compatible: non-astrology draws emit no `extras`
+key and are byte-identical. `Draw.extras` is intentionally generic — the same
+mechanism can later structure the other timed fortunes that currently live only
+in summaries (sanmeigaku 大運/年運, zi_wei 大限/流年, four-pillars 流年/大運). Suite:
+465 tests (+6), ruff + mypy clean.
+
+Interpreter follow-up (their repo): map `astro.aspect.<type>` × `kind` to
+localized text (5 types × natal/transit), add a `_candidate_keys` branch for
+`astro.aspect.*`, and render Aspects/Transits blocks. No further core change
+needed for that.

@@ -6,6 +6,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from fortune_telling_core.astronomy.position import normalize_degrees
+from fortune_telling_core.draw import Selection
+
+# Symbol id prefix for a structured aspect, e.g. ``astro.aspect.trine``. The
+# interpretation layer keys localized text off the full symbol id plus the
+# ``kind`` modifier (natal vs transit).
+ASPECT_SYMBOL_PREFIX = "astro.aspect."
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,3 +95,46 @@ def render_aspects(aspects: Sequence[Aspect], *, heading: str = "Aspects") -> st
         return None
     rendered = "; ".join(aspect.render() for aspect in aspects)
     return f"{heading}: {rendered}."
+
+
+def aspect_selection(aspect: Aspect, kind: str) -> Selection:
+    """Render an aspect as a structured, position-free draw selection.
+
+    Args:
+        aspect: The computed aspect.
+        kind: ``"natal"`` or ``"transit"`` — for transit aspects ``first`` is
+            the transiting body and ``second`` the natal body.
+
+    Returns:
+        A :class:`Selection` with ``symbol_id`` ``astro.aspect.<type>`` and
+        modifiers ``first`` / ``second`` (body ids), ``orb``, and ``kind``.
+    """
+
+    return Selection(
+        position_id="aspect",
+        symbol_id=f"{ASPECT_SYMBOL_PREFIX}{aspect.definition.id}",
+        modifiers={
+            "first": aspect.first,
+            "second": aspect.second,
+            "orb": f"{aspect.orb:.2f}",
+            "kind": kind,
+        },
+    )
+
+
+def aspect_extras(
+    natal: Mapping[str, float],
+    transit: Mapping[str, float] | None = None,
+) -> tuple[Selection, ...]:
+    """Structured aspect selections for a chart.
+
+    Natal aspects (within ``natal``) are always produced; transit-to-natal
+    cross-aspects are added when ``transit`` is given (``request.as_of`` set).
+    """
+
+    extras = [aspect_selection(aspect, "natal") for aspect in compute_aspects(natal)]
+    if transit is not None:
+        extras.extend(
+            aspect_selection(aspect, "transit") for aspect in compute_cross_aspects(transit, natal)
+        )
+    return tuple(extras)

@@ -10,8 +10,9 @@ from fortune_telling_core.astronomy.julian import julian_day_utc
 from fortune_telling_core.astronomy.nutation import true_obliquity
 from fortune_telling_core.draw import Draw, Selection
 from fortune_telling_core.traditions.astrology.angles import compute_angles
+from fortune_telling_core.traditions.astrology.aspects import aspect_extras
 from fortune_telling_core.traditions.astrology.birth import BirthData
-from fortune_telling_core.traditions.astrology.bodies import PLANETARY_BODIES, Angle
+from fortune_telling_core.traditions.astrology.bodies import PLANETARY_BODIES, Angle, Body
 from fortune_telling_core.traditions.astrology.config import ZodiacMode
 from fortune_telling_core.traditions.astrology.houses import (
     compute_houses,
@@ -46,9 +47,12 @@ def cast_draw(
     )
 
     selections: list[Selection] = []
+    natal_longitudes: dict[str, float] = {}
+    transit_longitudes: dict[str, float] = {}
     for body in PLANETARY_BODIES:
         position = ephemeris.position(body, jd_tt)
         longitude = _zodiac_longitude(position.longitude, birth, jd_tt)
+        natal_longitudes[body.value] = longitude
         extra: dict[str, str] | None = None
         if transit_jd_tt is not None and transit_at is not None:
             transit = ephemeris.position(body, transit_jd_tt)
@@ -60,6 +64,10 @@ def cast_draw(
             }
             if body is PLANETARY_BODIES[0]:
                 extra["transit_at"] = transit_at.isoformat()
+            # The mirror node duplicates its opposite's aspects; keep it out of
+            # the transiting set (mirrors the summary's exclusion).
+            if body is not Body.SOUTH_NODE:
+                transit_longitudes[body.value] = transit_longitude
         selections.append(
             _selection(
                 body.value, longitude, position.speed, house_of(longitude, houses), extra=extra
@@ -72,11 +80,20 @@ def cast_draw(
     selections.append(
         _selection(Angle.MIDHEAVEN.value, midheaven, 0.0, house_of(midheaven, houses))
     )
+    if birth.config.include_angles_in_aspects:
+        natal_longitudes[Angle.ASCENDANT.value] = ascendant
+        natal_longitudes[Angle.MIDHEAVEN.value] = midheaven
+
+    extras = aspect_extras(
+        natal_longitudes, transit_longitudes if transit_jd_tt is not None else None
+    )
 
     deck_id = (
         SIDEREAL_ZODIAC.id if birth.config.zodiac == ZodiacMode.SIDEREAL else TROPICAL_ZODIAC.id
     )
-    return Draw(deck_id=deck_id, spread_id=NATAL_CHART.id, selections=tuple(selections))
+    return Draw(
+        deck_id=deck_id, spread_id=NATAL_CHART.id, selections=tuple(selections), extras=extras
+    )
 
 
 def _zodiac_longitude(longitude: float, birth: BirthData, jd_tt: float) -> float:
