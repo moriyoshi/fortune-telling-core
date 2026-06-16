@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
@@ -67,6 +67,31 @@ def test_cast_replay_and_serde_are_deterministic() -> None:
 def test_birth_datetime_is_accepted_as_alias() -> None:
     reading = build_engine().cast(_request({"birth_datetime": "2024-01-01T12:00:00+09:00"}))
     assert reading.draw.selections[0].symbol_id == "koyomi.rokuyo.shakko"
+
+
+def test_as_of_is_used_when_no_explicit_target() -> None:
+    request = ReadingRequest(
+        spread_id=KOYOMI_SPREAD.id,
+        deck_id=KOYOMI_DECK.id,
+        as_of=datetime(2024, 1, 1, 12, 0, tzinfo=timezone(timedelta(hours=9))),
+    )
+    reading = build_engine().cast(request)
+    modifiers = reading.draw.selections[0].modifiers
+    assert modifiers is not None
+    # Same 甲子 day as the explicit-target test above.
+    assert modifiers["day_ganzhi"] == "甲子"
+
+
+def test_target_datetime_overrides_as_of() -> None:
+    request = ReadingRequest(
+        spread_id=KOYOMI_SPREAD.id,
+        deck_id=KOYOMI_DECK.id,
+        querent=Querent("subject", "Subject", {"target_datetime": "2024-03-15T12:00:00+09:00"}),
+        as_of=datetime(2024, 1, 1, 12, 0, tzinfo=timezone(timedelta(hours=9))),
+    )
+    modifiers = build_engine().cast(request).draw.selections[0].modifiers
+    assert modifiers is not None
+    assert modifiers["day_ganzhi"] == "戊寅"
 
 
 def test_validation_error_on_missing_date() -> None:

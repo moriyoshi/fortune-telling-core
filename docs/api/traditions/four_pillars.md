@@ -31,4 +31,8 @@ request = ReadingRequest(
 reading = engine.cast(request)
 ```
 
+The annual pillar (流年) year defaults to the request-level
+[`as_of`](../core.md#natal-vs-timed-readings) moment (or `requested_at` when unset); the
+`target_year` attribute overrides it when you need a specific year.
+
 ::: fortune_telling_core.traditions.four_pillars

@@ -75,6 +75,31 @@ def test_request_target_year_controls_annual_chart() -> None:
     assert "Annual chart 2025" in (reading.summary or "")
 
 
+def test_as_of_drives_annual_chart_when_target_year_absent() -> None:
+    attrs = {key: value for key, value in _attrs().items() if key != "target_year"}
+    request = ReadingRequest(
+        spread_id=NINE_STAR_KI_SPREAD.id,
+        deck_id=NINE_STAR_KI_DECK.id,
+        querent=Querent("native", "Native", attrs),
+        requested_at=datetime(2026, 6, 12, tzinfo=UTC),
+        as_of=datetime(2025, 1, 1, tzinfo=UTC),
+    )
+    reading = build_engine(_sun_at(315.0)).cast(request)
+    assert "Annual chart 2025" in (reading.summary or "")
+
+
+def test_target_year_option_overrides_as_of() -> None:
+    attrs = _attrs() | {"target_year": "2024"}
+    request = ReadingRequest(
+        spread_id=NINE_STAR_KI_SPREAD.id,
+        deck_id=NINE_STAR_KI_DECK.id,
+        querent=Querent("native", "Native", attrs),
+        as_of=datetime(2030, 1, 1, tzinfo=UTC),
+    )
+    reading = build_engine(_sun_at(315.0)).cast(request)
+    assert "Annual chart 2024" in (reading.summary or "")
+
+
 def test_request_day_star_escapement_override_changes_daily_star_and_provenance() -> None:
     attrs = {
         "birth_datetime": "2024-01-10T00:00:00+00:00",

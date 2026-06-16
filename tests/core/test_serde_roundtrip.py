@@ -28,6 +28,21 @@ def test_value_objects_round_trip_through_dicts() -> None:
     assert Draw.from_dict(draw.to_dict()) == draw
 
 
+def test_request_as_of_round_trips_and_defaults_to_requested_at() -> None:
+    requested_at = datetime(2026, 6, 16, 9, 0, tzinfo=UTC)
+    as_of = datetime(2030, 1, 1, tzinfo=UTC)
+
+    without = ReadingRequest(spread_id="s", deck_id="d", requested_at=requested_at)
+    assert without.as_of is None
+    assert without.effective_at == requested_at
+    assert "as_of" not in without.to_dict()
+    assert ReadingRequest.from_dict(without.to_dict()) == without
+
+    with_as_of = ReadingRequest(spread_id="s", deck_id="d", requested_at=requested_at, as_of=as_of)
+    assert with_as_of.effective_at == as_of
+    assert ReadingRequest.from_dict(with_as_of.to_dict()) == with_as_of
+
+
 def test_reading_json_round_trip() -> None:
     requested_at = datetime(2026, 6, 12, 9, 0, tzinfo=UTC)
     created_at = datetime(2026, 6, 12, 9, 1, tzinfo=UTC)

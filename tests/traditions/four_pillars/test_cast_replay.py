@@ -99,6 +99,40 @@ def test_no_top_level_core_leakage() -> None:
     assert "four_pillars" not in fortune_telling_core.__all__
 
 
+def test_as_of_drives_annual_pillar_when_target_year_absent() -> None:
+    from datetime import UTC, datetime
+
+    attrs = {key: value for key, value in _attrs().items() if key != "target_year"}
+    request = ReadingRequest(
+        spread_id=FOUR_PILLARS_SPREAD.id,
+        deck_id=FOUR_PILLARS_DECK.id,
+        querent=Querent("native", "Native", attrs),
+        requested_at=datetime(2026, 6, 16, tzinfo=UTC),
+        as_of=datetime(2030, 3, 1, tzinfo=UTC),
+    )
+    reading = build_engine(_sun_at(320.0)).cast(request)
+
+    assert reading.summary is not None
+    # as_of (2030) wins over requested_at (2026) for the 流年 annual pillar.
+    assert "Annual pillar 2030" in reading.summary
+
+
+def test_target_year_option_overrides_as_of() -> None:
+    from datetime import UTC, datetime
+
+    attrs = _attrs() | {"target_year": "2024"}
+    request = ReadingRequest(
+        spread_id=FOUR_PILLARS_SPREAD.id,
+        deck_id=FOUR_PILLARS_DECK.id,
+        querent=Querent("native", "Native", attrs),
+        as_of=datetime(2030, 3, 1, tzinfo=UTC),
+    )
+    reading = build_engine(_sun_at(320.0)).cast(request)
+
+    assert reading.summary is not None
+    assert "Annual pillar 2024" in reading.summary
+
+
 def _request() -> ReadingRequest:
     return ReadingRequest(
         spread_id=FOUR_PILLARS_SPREAD.id,

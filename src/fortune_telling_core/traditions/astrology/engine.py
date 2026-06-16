@@ -14,8 +14,13 @@ from fortune_telling_core.request import ReadingRequest
 from fortune_telling_core.rng import Rng
 from fortune_telling_core.spread import Spread
 from fortune_telling_core.symbols import Deck
-from fortune_telling_core.traditions.astrology.aspects import compute_aspects, render_aspects
+from fortune_telling_core.traditions.astrology.aspects import (
+    compute_aspects,
+    compute_cross_aspects,
+    render_aspects,
+)
 from fortune_telling_core.traditions.astrology.birth import parse_birth_data
+from fortune_telling_core.traditions.astrology.bodies import POSITION_NAMES, Body
 from fortune_telling_core.traditions.astrology.chart import cast_draw
 from fortune_telling_core.traditions.astrology.config import ZodiacMode
 from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART
@@ -46,6 +51,12 @@ class AstrologyEngine(AbstractEngine):
     The engine casts deterministic natal charts. It ignores caller-supplied
     randomness and records the ephemeris, house system, and zodiac mode in
     reading provenance.
+
+    When the request carries ``as_of``, the engine additionally computes the
+    transiting bodies for that moment and appends transit-to-natal aspects to
+    the summary. The natal chart is timeless, so without ``as_of`` the reading
+    is the pure natal chart. Transit positions are stored on the draw, so a
+    replay reproduces them without the ephemeris.
 
     Args:
         ephemeris: Optional backend implementing the shared ephemeris protocol.
@@ -116,7 +127,7 @@ class AstrologyEngine(AbstractEngine):
 
         del rng
         birth = parse_birth_data(request)
-        return cast_draw(birth, self.ephemeris)
+        return cast_draw(birth, self.ephemeris, transit_at=request.as_of)
 
     def cast(self, request: ReadingRequest) -> Reading:
         """Cast a natal chart without a caller RNG.
@@ -144,7 +155,9 @@ class AstrologyEngine(AbstractEngine):
             for position in base.positions
             if self._include_in_aspects(request, position.selection.position_id)
         }
-        summary = render_aspects(compute_aspects(longitudes))
+        natal = render_aspects(compute_aspects(longitudes))
+        transit_at, transits = _transit_longitudes(draw)
+        summary = _join_summaries(natal, _render_transits(transits, longitudes, transit_at))
         birth = parse_birth_data(request)
         notes = tuple(base.provenance.notes) + (
             f"ephemeris={self.ephemeris.id}@{self.ephemeris.version}",
@@ -152,6 +165,8 @@ class AstrologyEngine(AbstractEngine):
             f"zodiac={birth.config.zodiac.value}",
             f"ayanamsa={'' if birth.config.ayanamsa is None else birth.config.ayanamsa.value}",
         )
+        if transit_at is not None:
+            notes = (*notes, f"transit_at={transit_at}")
         return replace(
             base,
             summary=summary,
@@ -170,6 +185,49 @@ def _modifier_float(selection: Selection, key: str) -> float:
     if value is None:
         raise ValidationError(f"selection modifier {key!r} is required")
     return float(value)
+
+
+# The mirror node duplicates every aspect of its opposite, so it is omitted from
+# the transiting set to avoid doubled lines.
+_TRANSIT_EXCLUDED = frozenset({Body.SOUTH_NODE.value})
+
+
+def _transit_longitudes(draw: Draw) -> tuple[str | None, dict[str, float]]:
+    """Extract the transiting positions recorded in the draw.
+
+    Returns the transit timestamp (``None`` when no transits were cast) and a
+    map of position id to transit ecliptic longitude. Read from the draw so a
+    replay reproduces transits without touching the ephemeris.
+    """
+
+    transit_at: str | None = None
+    longitudes: dict[str, float] = {}
+    for selection in draw.selections:
+        modifiers = selection.modifiers or {}
+        if "transit_at" in modifiers:
+            transit_at = modifiers["transit_at"]
+        raw = modifiers.get("transit_longitude")
+        if raw is not None and selection.position_id not in _TRANSIT_EXCLUDED:
+            longitudes[selection.position_id] = float(raw)
+    return transit_at, longitudes
+
+
+def _render_transits(
+    transits: dict[str, float], natal: dict[str, float], transit_at: str | None
+) -> str | None:
+    if transit_at is None or not transits:
+        return None
+    transit_map = {f"transit {POSITION_NAMES[pid]}": lon for pid, lon in transits.items()}
+    natal_map = {f"natal {POSITION_NAMES[pid]}": lon for pid, lon in natal.items()}
+    return render_aspects(
+        compute_cross_aspects(transit_map, natal_map),
+        heading=f"Transits as of {transit_at}",
+    )
+
+
+def _join_summaries(*parts: str | None) -> str | None:
+    present = [part for part in parts if part]
+    return " ".join(present) if present else None
 
 
 def build_engine(ephemeris: Ephemeris | None = None) -> AstrologyEngine:

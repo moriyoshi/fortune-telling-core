@@ -147,8 +147,13 @@ class KoyomiEngine(AbstractEngine):
 
     def _target(self, request: ReadingRequest) -> KoyomiTarget:
         values = collect_values(request)
-        raw = values.get("target_datetime") or require_string(values, "birth_datetime")
-        return KoyomiTarget(target_datetime=parse_datetime(raw, "target_datetime"))
+        explicit = values.get("target_datetime")
+        if explicit:
+            return KoyomiTarget(parse_datetime(explicit, "target_datetime"))
+        if request.as_of is not None:
+            return KoyomiTarget(request.as_of)
+        raw = require_string(values, "birth_datetime")
+        return KoyomiTarget(parse_datetime(raw, "birth_datetime"))
 
 
 def build_engine(ephemeris: Ephemeris | None = None) -> KoyomiEngine:

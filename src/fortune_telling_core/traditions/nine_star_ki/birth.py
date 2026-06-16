@@ -41,7 +41,26 @@ def parse_birth_data(
         day_star_escapement=DayStarEscapement(
             values.get("day_star_escapement", default_day_star_escapement.value)
         ),
-        target_year=int(
-            values.get("target_year", str(default_target_year or request.requested_at.year))
-        ),
+        target_year=_resolve_target_year(request, values, default_target_year),
     )
+
+
+def _resolve_target_year(
+    request: ReadingRequest,
+    values: dict[str, str],
+    default_target_year: int | None,
+) -> int:
+    """Annual-chart year, most specific source first.
+
+    Explicit ``target_year`` option wins, then a per-request ``as_of`` moment,
+    then the engine's build-time default, then the request timestamp.
+    """
+
+    explicit = values.get("target_year")
+    if explicit:
+        return int(explicit)
+    if request.as_of is not None:
+        return request.as_of.year
+    if default_target_year is not None:
+        return default_target_year
+    return request.requested_at.year

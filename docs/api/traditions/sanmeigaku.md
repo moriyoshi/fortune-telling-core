@@ -30,4 +30,20 @@ request = ReadingRequest(
 reading = build_engine().cast(request)
 ```
 
+## Time-varying fortunes (年運 / 大運)
+
+Beyond the natal chart, the summary reports the period stars for a
+[`as_of`](../core.md#natal-vs-timed-readings) moment:
+
+- **年運** (annual stars) — the calendar year's 干支 mapped to a 主星 / 従星 for
+  the day master. Always rendered; the year defaults to `as_of` (or
+  `requested_at`) and can be pinned with the `target_year` attribute.
+- **大運** (luck cycles) — ten-year columns advancing (順行) or retreating (逆行)
+  from the month pillar. These are direction-dependent, so they appear only when
+  the request supplies a `gender` attribute (`male` / `female`): 陽年男・陰年女
+  → 順行, 陰年男・陽年女 → 逆行. Each column carries its 干支 and 主星 / 従星; the
+  start age uses the same 節入りまでの日数 ÷ 3 convention as the Four Pillars
+  engine (schools differ on the exact 起運 rule). `build_engine(luck_count=...)`
+  sets how many columns are rendered.
+
 ::: fortune_telling_core.traditions.sanmeigaku

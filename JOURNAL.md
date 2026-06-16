@@ -115,3 +115,89 @@ gap: `zi_wei` and `sanmeigaku` are validated component-by-component against
 canonical sub-tables, not against a full external worked chart — a trusted
 whole-chart fixture for either would be a worthwhile future addition. Suite:
 430 tests, ruff + mypy clean.
+
+## 2026-06-16 — Unified "as of" reference time for timed fortunes
+
+Natal divination is fixed by `birth_datetime`, but users also want fortunes
+*for a specific moment* (流年/大運 annual & luck pillars, flying-star charts,
+almanac days). That capability already existed in three traditions but through
+three incompatible knobs: Four Pillars and Nine Star Ki took a `target_year`
+int option, Koyomi took a `target_datetime` string, and Nine Star Ki also had a
+build-time `target_year` — with no shared way to ask "give me person X as of
+date D".
+
+Added one unified concept rather than a fourth bespoke knob:
+- `ReadingRequest.as_of: datetime | None` — the timezone-aware moment a reading
+  is computed *for*, with an `effective_at` property that falls back to
+  `requested_at`. Serialised only when set (no shape change for existing
+  requests) and round-trips through `to_dict`/`from_dict`.
+- Four Pillars / Nine Star Ki now default the annual year to `as_of` (via
+  `effective_at` / explicit precedence) instead of `requested_at`.
+- Koyomi keys its target off the nullable `as_of` so the "missing date raises"
+  contract is preserved (it must NOT silently fall back to "now").
+
+Precedence is most-specific-first everywhere: the legacy `target_year` /
+`target_datetime` options still win over `as_of`, which wins over engine
+build-time defaults, which win over `requested_at`. So `as_of` is a strict
+superset — no existing caller behaviour changes when it is unset.
+
+Deliberately did NOT touch the natal-only traditions (Sanmeigaku 大運/年運,
+Zi Wei 大限/流年, astrology transits): those are the agreed follow-up — adding
+real period engines on top of this shared `as_of` foundation. Suite: 437 tests
+(+7), ruff + mypy clean.
+
+## 2026-06-16 — Timed fortune engines: Sanmeigaku 大運/年運, Zi Wei 大限/流年, astrology transits
+
+Built the three timed engines on top of the unified `as_of` foundation, so a
+caller can read the same natal subject "as of" any moment. Each reuses
+already-validated machinery to keep rule-invention risk low, and stores the
+period inputs in the draw so replays stay ephemeris-free.
+
+- **Sanmeigaku** (`periods.py`): 年運 (annual 主星/従星 from the year 干支) is
+  always rendered for `effective_at`; 大運 (ten-year luck columns) is added when
+  the request supplies `gender`, reusing `four_pillars.luck` (`luck_forward` +
+  `luck_pillars`) and the existing 通変星→主星 / 十二運→従星 maps. Start age uses
+  the same 節入り÷3 convention as Four Pillars.
+- **Zi Wei** (`periods.py`): 流年 (annual 命宮 on the year's 太歲 branch) needs no
+  gender; the active 大限 (decade limit) is added with `gender`. Decades start at
+  the 五行局 number in 虚歳 (born = 1) and step 順/逆 by the same polarity×gender
+  rule (`luck_forward`); the major stars do not move.
+- **Astrology**: transits gated on an explicit `as_of` (the natal chart is
+  timeless — no `as_of` = unchanged pure natal). Transiting bodies for `as_of`
+  are computed and their transit-to-natal aspects appended via a new
+  `compute_cross_aspects`. Transit longitudes are stashed as selection modifiers
+  (the spread's selection set is fixed, so no extra selections), keeping replay
+  ephemeris-free. The South Node (mirror of the North) is dropped from the
+  transiting set.
+
+Pattern across all three: legacy `target_year` / `target_datetime` still
+override `as_of`; gendered direction is the only new required input, and it is
+optional so natal-only behaviour is preserved. Tests anchor to externally fixed
+facts (2024 = 甲辰, 2000 = 庚辰, 陰年男 逆行 / 陰年女 順行, 五行局 start ages) plus
+pure-function unit tests for each `periods.py` / cross-aspect helper. Suite: 456
+tests (+19), ruff + mypy clean.
+
+## 2026-06-16 — Harden timed-engine tests with verified worked examples
+
+Followed the established anchoring discipline (external facts + canonical
+sub-tables, not self-referential assertions) for the new timed features:
+
+- **Sanmeigaku** `test_periods.py`: 年運 worked across four consecutive
+  externally-fixed years (2023癸卯 … 2026丙午) with full 干支 + 主星 + 従星 each
+  derived from the canonical 高尾 tables, plus the complete 大運 干支 ladder
+  asserted in both 順行 / 逆行 directions (pure sexagenary stepping).
+- **Zi Wei** `test_periods.py`: built on the canonical reference chart
+  (命宮 亥, 土五局) that `test_chart.py` already validates; 流年 asserted against
+  the 太歲 branch for four fixed years, and the full 大限 ladder (ages + branch
+  walk + palace/star content) for both directions.
+- **Astrology** `test_transits.py`: replaced the single conjunction check with an
+  exact orb table covering every aspect type at its inclusive boundary (8/4/6)
+  and a verified non-aspect, plus a `_TwoTimeEphemeris` integration test that
+  proves transit positions are taken at `as_of` (not birth) — a moved transit
+  Sun yields a partile square to natal Sun, which a birth-time bug could not
+  produce.
+
+The earlier honest-limitation note still stands: these are component-wise worked
+examples anchored to calendar facts and canonical sub-tables, not whole-chart
+fixtures from a single trusted published 算命学 / 紫微 source. Suite: 459 tests
+(+3), ruff + mypy clean.

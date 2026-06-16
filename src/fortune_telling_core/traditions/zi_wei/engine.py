@@ -12,6 +12,7 @@ diverge between schools).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import datetime
 
@@ -31,6 +32,7 @@ from fortune_telling_core.request import ReadingRequest
 from fortune_telling_core.rng import Rng
 from fortune_telling_core.spread import Spread
 from fortune_telling_core.symbols import Deck
+from fortune_telling_core.traditions.four_pillars.config import LuckDirectionInput
 from fortune_telling_core.traditions.zi_wei.chart import (
     BRANCH_CJK,
     BRANCH_SLUG,
@@ -40,6 +42,7 @@ from fortune_telling_core.traditions.zi_wei.chart import (
     compute_chart,
 )
 from fortune_telling_core.traditions.zi_wei.deck import ZI_WEI_DECK
+from fortune_telling_core.traditions.zi_wei.periods import active_da_xian, liunian
 from fortune_telling_core.traditions.zi_wei.spreads import ZI_WEI_SPREAD
 
 _NULL_RNG = NullRng("ZiWeiEngine.cast must not use randomness")
@@ -56,6 +59,8 @@ _BUREAU_NAME: dict[int, str] = {
 @dataclass(frozen=True, slots=True)
 class ZiWeiBirth:
     birth_datetime: datetime
+    gender: LuckDirectionInput | None
+    target_year: int
 
 
 class ZiWeiEngine(AbstractEngine):
@@ -64,6 +69,11 @@ class ZiWeiEngine(AbstractEngine):
     Args:
         ephemeris: Optional backend implementing the shared ephemeris protocol,
             used by the lunisolar converter. Defaults to ``BuiltinEphemeris``.
+
+    Time-varying fortunes: the 流年 (annual 命宮) for ``request.as_of`` (or
+    ``target_year`` / ``requested_at``) is always reported; the active 大限
+    (decade limit) is added when the request supplies ``gender`` (male/female),
+    which fixes its 順行 / 逆行 direction.
     """
 
     id = "zi_wei.engine"
@@ -97,7 +107,12 @@ class ZiWeiEngine(AbstractEngine):
         lunisolar = to_lunisolar(jd_tt, tz_hours=tz_hours, ephemeris=self.ephemeris)
         hour_branch = ((birth.birth_datetime.hour + 1) // 2) % 12
         chart = compute_chart(lunisolar.year, lunisolar.month, lunisolar.day, hour_branch)
-        return _draw_from_chart(chart)
+        return _draw_from_chart(
+            chart,
+            target_year=birth.target_year,
+            gender=birth.gender,
+            birth_lunar_year=lunisolar.year,
+        )
 
     def cast(self, request: ReadingRequest) -> Reading:
         """Compute a Zi Wei reading without a caller RNG."""
@@ -113,12 +128,14 @@ class ZiWeiEngine(AbstractEngine):
         summary = (
             f"Zi Wei 命宮 in {ming['branch_cjk']} ({_BUREAU_NAME.get(int(bureau), bureau)}); "
             f"命宮 stars: {stars}."
-        )
+        ) + _periods_text(ming)
         notes = tuple(base.provenance.notes) + (
             f"ephemeris={self.ephemeris.id}@{self.ephemeris.version}",
             "stars=14_major",
             "lunar_year_stem_branch=annual-index",
             "transformations=omitted",
+            f"target_year={ming['target_year']}",
+            "da_xian_start_age=wuxing_bureau_in_nominal_age",
         )
         return replace(
             base,
@@ -129,30 +146,89 @@ class ZiWeiEngine(AbstractEngine):
     def _birth(self, request: ReadingRequest) -> ZiWeiBirth:
         values = collect_values(request)
         raw = require_string(values, "birth_datetime")
-        return ZiWeiBirth(birth_datetime=parse_datetime(raw, "birth_datetime"))
+        gender = LuckDirectionInput(values["gender"]) if values.get("gender") else None
+        return ZiWeiBirth(
+            birth_datetime=parse_datetime(raw, "birth_datetime"),
+            gender=gender,
+            target_year=int(values.get("target_year") or request.effective_at.year),
+        )
 
 
-def _draw_from_chart(chart: ZiWeiChart) -> Draw:
+def _draw_from_chart(
+    chart: ZiWeiChart,
+    *,
+    target_year: int,
+    gender: LuckDirectionInput | None,
+    birth_lunar_year: int,
+) -> Draw:
     selections: list[Selection] = []
     for index, (slug, cjk) in enumerate(PALACES):
         branch = chart.palace_branches[index]
         stars = chart.stars_by_branch[branch]
-        selections.append(
-            Selection(
-                slug,
-                f"zi_wei.branch.{BRANCH_SLUG[branch]}",
-                {
-                    "palace": cjk,
-                    "branch_cjk": BRANCH_CJK[branch],
-                    "stem_cjk": STEM_CJK[chart.palace_stems[index]],
-                    "stars": ",".join(star.slug for star in stars),
-                    "stars_cjk": ",".join(star.cjk for star in stars),
-                    "is_body_palace": str(branch == chart.body_branch).lower(),
-                    "bureau": str(chart.bureau),
-                },
-            )
-        )
+        modifiers = {
+            "palace": cjk,
+            "branch_cjk": BRANCH_CJK[branch],
+            "stem_cjk": STEM_CJK[chart.palace_stems[index]],
+            "stars": ",".join(star.slug for star in stars),
+            "stars_cjk": ",".join(star.cjk for star in stars),
+            "is_body_palace": str(branch == chart.body_branch).lower(),
+            "bureau": str(chart.bureau),
+        }
+        if slug == "ming":
+            modifiers.update(_period_meta(chart, target_year, gender, birth_lunar_year))
+        selections.append(Selection(slug, f"zi_wei.branch.{BRANCH_SLUG[branch]}", modifiers))
     return Draw(ZI_WEI_DECK.id, ZI_WEI_SPREAD.id, tuple(selections))
+
+
+def _period_meta(
+    chart: ZiWeiChart,
+    target_year: int,
+    gender: LuckDirectionInput | None,
+    birth_lunar_year: int,
+) -> dict[str, str]:
+    """Re-derivable pointers for the 流年 / 大限 of ``target_year``.
+
+    Stored on the 命宮 selection so a replay reproduces them from the draw alone.
+    """
+
+    annual = liunian(chart, target_year)
+    meta: dict[str, str] = {
+        "target_year": str(target_year),
+        "liunian_ganzhi": annual.ganzhi_cjk,
+        "liunian_branch_cjk": BRANCH_CJK[annual.palace.branch],
+        "liunian_palace": annual.palace.palace_cjk,
+        "liunian_stars_cjk": annual.palace.stars_cjk,
+    }
+    if gender is not None:
+        decade = active_da_xian(chart, gender, birth_lunar_year, target_year)
+        meta.update(
+            {
+                "gender": gender.value,
+                "da_xian_direction": "forward" if decade.forward else "backward",
+                "da_xian_start_age": str(decade.start_age),
+                "da_xian_end_age": str(decade.end_age),
+                "da_xian_branch_cjk": BRANCH_CJK[decade.palace.branch],
+                "da_xian_palace": decade.palace.palace_cjk,
+                "da_xian_stars_cjk": decade.palace.stars_cjk,
+            }
+        )
+    return meta
+
+
+def _periods_text(ming: Mapping[str, str]) -> str:
+    liunian_stars = ming["liunian_stars_cjk"] or "(empty)"
+    parts = [
+        f" Liunian {ming['target_year']} ({ming['liunian_ganzhi']}) 命宮 in "
+        f"{ming['liunian_branch_cjk']} ({ming['liunian_palace']}): {liunian_stars}."
+    ]
+    if "da_xian_direction" in ming:
+        da_xian_stars = ming["da_xian_stars_cjk"] or "(empty)"
+        parts.append(
+            f" Da Xian ({ming['da_xian_direction']}) ages "
+            f"{ming['da_xian_start_age']}-{ming['da_xian_end_age']} in "
+            f"{ming['da_xian_branch_cjk']} ({ming['da_xian_palace']}): {da_xian_stars}."
+        )
+    return "".join(parts)
 
 
 def build_engine(ephemeris: Ephemeris | None = None) -> ZiWeiEngine:
