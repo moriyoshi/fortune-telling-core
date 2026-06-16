@@ -54,6 +54,12 @@ release = [
 [tool.hatch.version]
 source = "vcs"
 
+# Write the VCS-derived version into a generated module so `__version__` is a
+# real source-of-truth import, not a hand-maintained literal. The file is a
+# build artifact (git-ignored); hatch-vcs regenerates it on every build/install.
+[tool.hatch.build.hooks.vcs]
+version-file = "src/fortune_telling_core/_version.py"
+
 [tool.hatch.build]
 exclude = [
   "/.agents",

@@ -201,3 +201,32 @@ The earlier honest-limitation note still stands: these are component-wise worked
 examples anchored to calendar facts and canonical sub-tables, not whole-chart
 fixtures from a single trusted published 算命学 / 紫微 source. Suite: 459 tests
 (+3), ruff + mypy clean.
+
+## 2026-06-16 — Release intent: v1.0.0 (breaking)
+
+The feat-sanmeigaku branch changes computed output of engines that shipped in
+v0.4.0, so the next release is a major bump to **v1.0.0**.
+
+Breaking change (the reason for the major bump): the day-pillar sexagenary anchor
+was corrected from 1984-02-02 to 2000-01-07 (the former is 丙寅, not the assumed
+甲子 — off by two). This shifts every day pillar / day star / day 干支 produced by
+**four_pillars, nine_star_ki, and can_chi** relative to v0.4.0. Charts cast on
+v0.4.0 will not match v1.0.0 for these engines.
+
+Everything else on the branch is additive and backward-compatible: the new
+sanmeigaku / sukuyo / koyomi / zi_wei engines, the unified `ReadingRequest.as_of`
+(optional; legacy `target_year` / `target_datetime` still override), and the
+timed-fortune outputs (年運/大運, 流年/大限, transits). No public symbols were
+removed or renamed; `build_engine` signatures only gained optional keywords.
+
+Version mechanics: the package version is VCS-tag-derived (`tool.hatch.version
+source = "vcs"`), so the authoritative bump is the `v1.0.0` git tag cut on `main`
+at release time — a deliberate maintainer step, intentionally NOT done here. The
+`__version__` literal in `__init__.py` had been stale at 0.1.0 across the 0.2–0.4
+tags. It is now sourced from a generated `_version.py` written by the hatch-vcs
+build hook (`[tool.hatch.build.hooks.vcs] version-file`, the documented
+write-version-to-file pattern); `__init__` re-exports `__version__` from it, the
+file is git-ignored, and `tests/test_package.py` asserts the runtime version
+equals the installed distribution metadata instead of pinning a literal. No
+version string is hardcoded anywhere, so `__version__` becomes `1.0.0`
+automatically once the `v1.0.0` tag is cut.

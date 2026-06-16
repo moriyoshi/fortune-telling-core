@@ -18,7 +18,12 @@ Example:
     ```
 """
 
-__version__ = "0.1.0"
+try:
+    # Single source of truth: _version.py is generated from the git tag by
+    # hatch-vcs at build/install time (see pyproject [tool.hatch.build.hooks.vcs]).
+    from fortune_telling_core._version import __version__  # noqa: E402
+except ImportError:  # pragma: no cover - generated file absent in an unbuilt tree
+    __version__ = "0.0.0+unknown"
 
 from fortune_telling_core.draw import Draw, Selection  # noqa: E402
 from fortune_telling_core.engine import Engine  # noqa: E402
