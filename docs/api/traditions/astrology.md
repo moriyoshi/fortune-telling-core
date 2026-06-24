@@ -2,6 +2,7 @@
 
 A natal-chart engine: tropical or sidereal zodiac, ten planets plus the lunar nodes and the
 Ascendant/Midheaven, Whole Sign / Equal / Placidus houses, and aspects rendered into the summary.
+A lightweight [sun-sign spread](#sun-sign) is also available for callers who have only a birthday.
 
 ```python
 from fortune_telling_core import Querent, ReadingRequest
@@ -24,6 +25,40 @@ request = ReadingRequest(
 )
 
 reading = engine.cast(request)
+```
+
+## Sun sign
+
+The `SUN_SIGN` spread is a single-placement reading that needs **only the
+querent's zodiac sign** — no birth time, latitude, or longitude — so it serves
+callers who know just a birthday. The sign is taken from an explicit `sun_sign`
+attribute (a `Sign`, a sign symbol id like `astro.sign.leo`, or a bare slug like
+`leo`); when that is absent, a `birth_date` (or `birth_datetime` — only the
+calendar date is used) is classified into a sign using the conventional Western
+tropical date ranges (`sign_for_date` / `zodiac_date_range`). The placement
+reuses the `sun` position id, so the same Sun-in-sign interpretation data
+applies as in the natal chart.
+
+Sun-sign readings are always tropical: the conventional date ranges are a
+tropical convention, and a sidereal sun sign is not well-defined from a date
+alone. The reading touches neither the ephemeris nor birth time and place, and
+like the natal chart it is deterministic and replay-safe.
+
+```python
+from fortune_telling_core.traditions.astrology import SUN_SIGN, TROPICAL_ZODIAC
+
+reading = engine.cast(
+    ReadingRequest(
+        deck_id=TROPICAL_ZODIAC.id,
+        spread_id=SUN_SIGN.id,
+        querent=Querent(
+            id="sample",
+            display_name="Sample",
+            attributes={"birth_date": "1990-04-15"},  # or {"sun_sign": "aries"}
+        ),
+    )
+)
+# reading.summary == "Sun sign Aries (fire, cardinal), Mar 21 – Apr 19."
 ```
 
 ## Transits
