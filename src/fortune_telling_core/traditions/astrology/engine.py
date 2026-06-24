@@ -23,7 +23,8 @@ from fortune_telling_core.traditions.astrology.birth import parse_birth_data
 from fortune_telling_core.traditions.astrology.bodies import POSITION_NAMES, Body
 from fortune_telling_core.traditions.astrology.chart import cast_draw
 from fortune_telling_core.traditions.astrology.config import ZodiacMode
-from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART
+from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART, SUN_SIGN
+from fortune_telling_core.traditions.astrology.sun_sign import cast_sun_sign_draw
 from fortune_telling_core.traditions.astrology.zodiac import SIDEREAL_ZODIAC, TROPICAL_ZODIAC
 
 
@@ -52,6 +53,11 @@ class AstrologyEngine(AbstractEngine):
     randomness and records the ephemeris, house system, and zodiac mode in
     reading provenance.
 
+    The engine also serves the lightweight :data:`SUN_SIGN` spread, which needs
+    only the querent's zodiac sign (from an explicit ``sun_sign`` or a birth
+    date) and uses neither the ephemeris nor birth time and location. Sun-sign
+    readings are always tropical.
+
     When the request carries ``as_of``, the engine additionally computes the
     transiting bodies for that moment and appends transit-to-natal aspects to
     the summary. The natal chart is timeless, so without ``as_of`` the reading
@@ -77,31 +83,36 @@ class AstrologyEngine(AbstractEngine):
                 ``zodiac`` configuration in options or querent attributes.
 
         Returns:
-            ``SIDEREAL_ZODIAC`` when the request asks for sidereal astrology,
-            otherwise ``TROPICAL_ZODIAC``.
+            ``TROPICAL_ZODIAC`` for the sun-sign spread, ``SIDEREAL_ZODIAC``
+            when a natal request asks for sidereal astrology, otherwise
+            ``TROPICAL_ZODIAC``.
 
         Raises:
             ValidationError: If required birth data or configuration is
                 invalid.
         """
 
+        if request.spread_id == SUN_SIGN.id:
+            return TROPICAL_ZODIAC
         birth = parse_birth_data(request)
         return SIDEREAL_ZODIAC if birth.config.zodiac == ZodiacMode.SIDEREAL else TROPICAL_ZODIAC
 
     def spread(self, request: ReadingRequest) -> Spread:
-        """Return the natal chart spread.
+        """Return the spread implied by the request.
 
         Args:
             request: Reading request whose ``spread_id`` must match
-                ``NATAL_CHART.id``.
+                ``NATAL_CHART.id`` or ``SUN_SIGN.id``.
 
         Returns:
-            The natal chart spread.
+            The natal chart spread or the sun-sign spread.
 
         Raises:
             ValidationError: If the requested spread is unsupported.
         """
 
+        if request.spread_id == SUN_SIGN.id:
+            return SUN_SIGN
         if request.spread_id != NATAL_CHART.id:
             raise ValidationError(f"unsupported astrology spread: {request.spread_id}")
         return NATAL_CHART
@@ -126,6 +137,8 @@ class AstrologyEngine(AbstractEngine):
         """
 
         del rng
+        if request.spread_id == SUN_SIGN.id:
+            return cast_sun_sign_draw(request)
         birth = parse_birth_data(request)
         return cast_draw(birth, self.ephemeris, transit_at=request.as_of)
 
@@ -149,6 +162,8 @@ class AstrologyEngine(AbstractEngine):
         return self._interpret(request, draw, rng=None)
 
     def _interpret(self, request: ReadingRequest, draw: Draw, rng: Rng | None) -> Reading:
+        if request.spread_id == SUN_SIGN.id:
+            return self._interpret_sun_sign(request, draw, rng)
         base = super()._interpret(request, draw, rng)
         longitudes = {
             position.selection.position_id: _modifier_float(position.selection, "longitude")
@@ -167,6 +182,23 @@ class AstrologyEngine(AbstractEngine):
         )
         if transit_at is not None:
             notes = (*notes, f"transit_at={transit_at}")
+        return replace(
+            base,
+            summary=summary,
+            provenance=replace(base.provenance, notes=notes, rng_kind=None, rng_seed=None),
+        )
+
+    def _interpret_sun_sign(self, request: ReadingRequest, draw: Draw, rng: Rng | None) -> Reading:
+        base = super()._interpret(request, draw, rng)
+        modifiers = dict(draw.selections[0].modifiers or {})
+        summary = (
+            f"Sun sign {modifiers['sign']} "
+            f"({modifiers['element']}, {modifiers['modality']}), {modifiers['date_range']}."
+        )
+        notes = tuple(base.provenance.notes) + (
+            "zodiac=tropical",
+            f"sun_sign_source={modifiers['source']}",
+        )
         return replace(
             base,
             summary=summary,

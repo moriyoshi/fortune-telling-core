@@ -3,9 +3,10 @@ from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
 """Natal astrology tradition implementation.
 
-The package exposes tropical and sidereal zodiac decks, the natal spread,
-the injectable ephemeris protocol and bundled ephemeris implementations, and
-an engine builder.
+The package exposes tropical and sidereal zodiac decks, the natal spread, the
+lightweight sun-sign spread (which needs only the querent's zodiac sign), the
+injectable ephemeris protocol and bundled ephemeris implementations, and an
+engine builder.
 
 Example:
     ```python
@@ -44,7 +45,10 @@ from fortune_telling_core.traditions.astrology.engine import (  # noqa: E402
     AstrologyEngine,
     build_engine,
 )
-from fortune_telling_core.traditions.astrology.spreads import NATAL_CHART  # noqa: E402
+from fortune_telling_core.traditions.astrology.spreads import (  # noqa: E402
+    NATAL_CHART,
+    SUN_SIGN,
+)
 from fortune_telling_core.traditions.astrology.zodiac import (  # noqa: E402
     SIDEREAL_ZODIAC,
     TROPICAL_ZODIAC,
@@ -54,6 +58,7 @@ from fortune_telling_core.traditions.astrology.zodiac import (  # noqa: E402
 __all__ = [
     "NATAL_CHART",
     "SIDEREAL_ZODIAC",
+    "SUN_SIGN",
     "TROPICAL_ZODIAC",
     "AstrologyEngine",
     "BuiltinEphemeris",

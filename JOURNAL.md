@@ -295,3 +295,35 @@ mypy (src + tests) clean.
 
 Note: changing the thaksa graha color value and the lenormand position name are
 minor *display*-data changes (not computational), appropriate for a v1.1.0.
+
+## 2026-06-24 — Astrology sun-sign reading (zodiac-sign-only)
+
+Added a lightweight **sun-sign** reading to the astrology tradition, alongside
+the existing natal chart. It needs only the querent's zodiac sign — no birth
+time, latitude, or longitude — so it serves callers who know just a birthday.
+
+Design decisions:
+- New `SUN_SIGN` spread (`astro.spread.sun_sign.v1`) with a single position
+  whose id is `sun` (= `Body.SUN.value`). Reusing the `sun` position id means
+  the interpreter's existing **Sun-in-sign** datasets — keyed on
+  `(astro.sign.X, "sun")` — apply verbatim, so no interpreter changes were
+  needed. Verified end-to-end (interpreter not installed in this venv, but the
+  key contract is the reuse of the `sun` position + `astro.sign.*` symbols).
+- New `sun_sign.py` resolves the sign from an explicit `sun_sign` attribute
+  (Sign / symbol id / bare slug) or, failing that, from `birth_date` /
+  `birth_datetime`, classified via the existing `dates.sign_for_date`
+  conventional tropical ranges. `datetime.fromisoformat` accepts both a bare
+  date and a full datetime, so only the calendar date is consulted.
+- Sun-sign is **always tropical** — the conventional date ranges are a tropical
+  convention and a sidereal sun sign isn't well-defined from a date alone. The
+  engine branches on `spread_id` in `deck`/`spread`/`draw`/`_interpret` so the
+  sun-sign path never touches the ephemeris or requires lat/long.
+- Draw is fully replayable (single `Selection`, no extras); modifiers carry
+  sign/element/modality/polarity/ruler/date_range/source for the summary.
+
+Tests: `tests/traditions/astrology/test_sun_sign.py` (10) cover date input,
+full-datetime input, explicit sign (slug + symbol id), tropical/RNG-free
+provenance, determinism, replay + serde round-trip, and the missing/unknown/
+malformed error paths. Astrology suite 44 pass; ruff + mypy (src + tests) clean.
+The one failing test in the full run — `test_package_version_tracks_vcs_metadata`
+— fails on a clean tree too (editable-install version mismatch), unrelated.
