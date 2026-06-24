@@ -181,7 +181,11 @@ not supported by scientific evidence.)
 **In the library.** *Computed* from `birth_datetime`, `latitude`, `longitude`.
 Deck = the 12 signs (tropical or sidereal); spread = natal positions
 (luminaries, planets, nodes, angles). Configurable zodiac and house system; the
-summary lists major aspects.
+summary lists major aspects. A lightweight **sun-sign** spread is also provided
+for callers who have only a birthday: it needs just the zodiac sign (an explicit
+`sun_sign`, or a `birth_date` classified by the conventional tropical date
+ranges), uses neither the ephemeris nor birth time and place, and is always
+tropical.
 
 ### Four Pillars of Destiny (BaZi / 四柱推命)
 
